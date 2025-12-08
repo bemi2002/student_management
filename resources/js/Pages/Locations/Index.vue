@@ -1,5 +1,5 @@
 <script setup>
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+
 import { Head, Link, useForm } from '@inertiajs/vue3'
 
 defineProps({ locations: Array })
@@ -18,7 +18,7 @@ function deleteLocation(id) {
 </script>
 
 <template>
-  <AuthenticatedLayout>
+  
     <Head title="Locations" />
 
     <div class="p-8 bg-gray-100 min-h-screen">
@@ -61,5 +61,5 @@ function deleteLocation(id) {
         No locations found.
       </div>
     </div>
-  </AuthenticatedLayout>
+  
 </template>

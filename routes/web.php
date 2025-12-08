@@ -70,11 +70,12 @@ Route::middleware('auth')->group(function () {
 
     // Users
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
-    Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
-    Route::post('/users', [UserController::class, 'store'])->name('users.store');
-    Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('users.edit');
-    Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
-    Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
+Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
+Route::post('/users', [UserController::class, 'store'])->name('users.store');
+
+Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 
     // Chat
     
@@ -140,6 +141,14 @@ Route::get('/calendar', function () {
 });
 
 
+Route::get('/calendar-events', [CalendarEventController::class, 'index']);
+Route::post('/calendar-events', [CalendarEventController::class, 'store']);
+Route::put('/calendar-events/{id}', [CalendarEventController::class, 'update']);
+Route::delete('/calendar-events/{id}', [CalendarEventController::class, 'destroy']);
+
+
+
+Route::get('/enrollments/simple', [EnrollmentssController::class, 'listSimple']);
 
 
 Route::middleware(['auth'])->group(function () {

@@ -11,24 +11,25 @@ use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
+    // Define allowed actions per role
     private $permissions = [
         'Admin' => ['view', 'create', 'edit', 'delete'],
-      
     ];
 
-    
     private function checkPermission(string $action): bool
     {
         $user = Auth::user();
+        if (!$user) return false;
+
         foreach ($this->permissions as $role => $allowedActions) {
             if ($user->hasRole($role)) {
                 return in_array($action, $allowedActions);
             }
         }
+
         return false;
     }
 
-    
     private function authorizeAction(string $action)
     {
         if (!$this->checkPermission($action)) {
@@ -36,6 +37,7 @@ class UserController extends Controller
         }
     }
 
+    // Fetch all users for Settings.vue
     public function index()
     {
         $this->authorizeAction('view');
@@ -53,29 +55,19 @@ class UserController extends Controller
             ];
         });
 
-        return Inertia::render('Users/Index', [
-            'users' => $users
-        ]);
-    }
-
-   
-    public function create()
-    {
-        $this->authorizeAction('create');
-
         $roles = Role::all();
 
-        return Inertia::render('Users/Create', [
-            'roles' => $roles
+        return Inertia::render('Settings', [
+            'users' => $users,
+            'roles' => $roles,
         ]);
     }
 
-    
     public function store(Request $request)
     {
         $this->authorizeAction('create');
 
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:6',
@@ -83,76 +75,65 @@ class UserController extends Controller
         ]);
 
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password)
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password'])
         ]);
 
-        if (!empty($request->roles)) {
-            $roles = Role::whereIn('id', $request->roles)->get();
+        if (!empty($validated['roles'])) {
+            $roles = Role::whereIn('id', $validated['roles'])->get();
             $user->syncRoles($roles);
         }
 
-        return redirect()->route('users.index')->with('success', 'User created successfully!');
-    }
-
-    
-    public function edit($id)
-    {
-        $this->authorizeAction('edit');
-
-        $user = User::findOrFail($id);
-        $roles = Role::all();
-        $userRoles = $user->roles->pluck('id')->toArray();
-
-        return Inertia::render('Users/Edit', [
-            'user' => $user,
-            'roles' => $roles,
-            'userRoles' => $userRoles
+        // Redirect back to Settings.vue
+        return back()->with([
+            'success' => 'User created successfully!',
+            'users' => User::with('roles')->get(),
         ]);
     }
 
-    // Update user
-    public function update(Request $request, $id)
+    public function update(Request $request, User $user)
     {
         $this->authorizeAction('edit');
 
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $id,
+            'email' => 'required|email|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:6',
             'roles' => 'array'
         ]);
 
-        $user = User::findOrFail($id);
+        $updateData = [
+            'name' => $validated['name'],
+            'email' => $validated['email']
+        ];
 
-        $user->update([
-            'name' => $request->name,
-            'email' => $request->email
-        ]);
-
-        if ($request->filled('password')) {
-            $user->update([
-                'password' => Hash::make($request->password)
-            ]);
+        if (!empty($validated['password'])) {
+            $updateData['password'] = Hash::make($validated['password']);
         }
 
-        $roles = !empty($request->roles)
-            ? Role::whereIn('id', $request->roles)->get()
+        $user->update($updateData);
+
+        $roles = !empty($validated['roles'])
+            ? Role::whereIn('id', $validated['roles'])->get()
             : [];
         $user->syncRoles($roles);
 
-        return redirect()->route('users.index')->with('success', 'User updated successfully!');
+        return back()->with([
+            'success' => 'User updated successfully!',
+            'users' => User::with('roles')->get(),
+        ]);
     }
 
-    // Delete user
-    public function destroy($id)
+    public function destroy(User $user)
     {
         $this->authorizeAction('delete');
 
-        $user = User::findOrFail($id);
         $user->delete();
 
-        return redirect()->route('users.index')->with('success', 'User deleted successfully!');
+        return back()->with([
+            'success' => 'User deleted successfully!',
+            'users' => User::with('roles')->get(),
+        ]);
     }
 }

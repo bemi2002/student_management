@@ -38,21 +38,10 @@ class RoleController extends Controller
     public function index()
     {
         $this->authorizeAction('view');
-        $roles = Role::with('permissions')->get();
 
-        return Inertia::render('Roles/Index', [
-            'roles' => $roles,
-        ]);
-    }
-
-    public function create()
-    {
-        $this->authorizeAction('create');
-
-        $permissions = Permission::all();
-
-        return Inertia::render('Roles/Create', [
-            'permissions' => $permissions
+        return Inertia::render('Settings/Index', [
+            'roles' => Role::with('permissions')->get(),
+            'permissions' => Permission::all()
         ]);
     }
 
@@ -66,6 +55,7 @@ class RoleController extends Controller
         ]);
 
         $role = Role::create(['name' => $validated['name']]);
+
         if (!empty($validated['permissions'])) {
             $role->syncPermissions($validated['permissions']);
         }
@@ -73,20 +63,10 @@ class RoleController extends Controller
         // Clear permission cache
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        return redirect()->route('roles.index')->with('success', "Role '{$role->name}' created successfully.");
-    }
-
-    public function edit($id)
-    {
-        $this->authorizeAction('edit');
-
-        $role = Role::with('permissions')->findOrFail($id);
-        $permissions = Permission::all();
-
-        return Inertia::render('Roles/Edit', [
-            'role' => $role,
-            'permissions' => $permissions,
-            'rolePermissions' => $role->permissions->pluck('id')->toArray()
+        return redirect()->back()->with([
+            'success' => "Role '{$role->name}' created successfully!",
+            'roles' => Role::with('permissions')->get(),
+            'permissions' => Permission::all()
         ]);
     }
 
@@ -107,7 +87,11 @@ class RoleController extends Controller
         // Clear permission cache
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        return redirect()->route('roles.index')->with('success', "Role '{$role->name}' updated successfully.");
+        return redirect()->back()->with([
+            'success' => "Role '{$role->name}' updated successfully!",
+            'roles' => Role::with('permissions')->get(),
+            'permissions' => Permission::all()
+        ]);
     }
 
     public function destroy($id)
@@ -117,27 +101,29 @@ class RoleController extends Controller
         $role = Role::find($id);
 
         if (!$role) {
-            return redirect()->route('roles.index')->with('error', 'Role not found.');
+            return redirect()->back()->with('error', 'Role not found.');
         }
 
         $protectedRoles = ['admin', 'super-admin', 'Admin', 'Super-Admin'];
         if (in_array($role->name, $protectedRoles)) {
-            return redirect()->route('roles.index')->with('error', 'Protected system roles cannot be deleted.');
+            return redirect()->back()->with('error', 'Protected system roles cannot be deleted.');
         }
 
         try {
-            // Detach all users
             $role->users()->detach();
 
-            // Delete role permanently using DB
             DB::table('roles')->where('id', $role->id)->delete();
 
-            // Clear Spatie permission cache
             app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-            return redirect()->route('roles.index')->with('success', "Role '{$role->name}' deleted permanently.");
+            return redirect()->back()->with([
+                'success' => "Role '{$role->name}' deleted successfully!",
+                'roles' => Role::with('permissions')->get(),
+                'permissions' => Permission::all()
+            ]);
+
         } catch (\Exception $e) {
-            return redirect()->route('roles.index')->with('error', 'Failed to delete role: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to delete role: ' . $e->getMessage());
         }
     }
 }

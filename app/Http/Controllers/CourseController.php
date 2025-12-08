@@ -11,9 +11,8 @@ class CourseController extends Controller
 {
     // Define allowed actions per role
     private $permissions = [
-        
         'Admin'       => ['view','create','edit','delete'],
-        'Teacher'     => ['view','create','edit','delete'], // adjust as needed
+        'Teacher'     => ['view','create','edit','delete'],
     ];
 
     /**
@@ -22,6 +21,7 @@ class CourseController extends Controller
     private function checkPermission(string $action): bool
     {
         $user = Auth::user();
+        if (!$user) return false;
 
         // Loop through roles and check if user has the role
         foreach ($this->permissions as $role => $allowedActions) {
@@ -44,27 +44,14 @@ class CourseController extends Controller
     }
 
     public function index()
-{
-    $this->authorizeAction('view');
-
-    $courses = Course::with('subCourses')->get()->map(function ($course) {
-        // Map the camelCase relationship to snake_case for Vue
-        $course->sub_courses = $course->subCourses;
-        return $course;
-    });
-
-    return Inertia::render('Courses/Index', [
-        'courses' => $courses
-    ]);
-}
-
-
-    // Show create course form
-    public function create()
     {
-        $this->authorizeAction('create');
+        $this->authorizeAction('view');
 
-        return Inertia::render('Courses/Create');
+        $courses = Course::all();
+
+        return Inertia::render('Settings/Index', [
+            'courses' => $courses
+        ]);
     }
 
     // Store new course
@@ -73,29 +60,19 @@ class CourseController extends Controller
         $this->authorizeAction('create');
 
         $validated = $request->validate([
-          
             'course_name'    => 'required|string|max:255',
             'description'    => 'nullable|string',
             'duration_dates' => 'required|integer|min:1',
-            
-            'level'          => 'required|string|max:50',
+            'level'          => 'required|string|in:beginner,intermediate,advanced',
             'start_date'     => 'required|date',
-            'end_date'       => 'required|date',
+            'end_date'       => 'required|date|after_or_equal:start_date',
         ]);
 
         Course::create($validated);
 
-        return redirect()->route('courses.index')
-                         ->with('success', 'Course created successfully!');
-    }
-
-    // Show edit course form
-    public function edit(Course $course)
-    {
-        $this->authorizeAction('edit');
-
-        return Inertia::render('Courses/Edit', [
-            'course' => $course,
+        return redirect()->back()->with([
+            'success' => 'Course created successfully!',
+            'courses' => Course::all()
         ]);
     }
 
@@ -105,20 +82,20 @@ class CourseController extends Controller
         $this->authorizeAction('edit');
 
         $validated = $request->validate([
-         
             'course_name'    => 'required|string|max:255',
             'description'    => 'nullable|string',
             'duration_dates' => 'required|integer|min:1',
-        
-            'level'          => 'required|string|max:50',
+            'level'          => 'required|string|in:beginner,intermediate,advanced',
             'start_date'     => 'required|date',
-            'end_date'     => 'required|date',
+            'end_date'       => 'required|date|after_or_equal:start_date',
         ]);
 
         $course->update($validated);
 
-        return redirect()->route('courses.index')
-                         ->with('success', 'Course updated successfully!');
+        return redirect()->back()->with([
+            'success' => 'Course updated successfully!',
+            'courses' => Course::all()
+        ]);
     }
 
     // Delete course
@@ -128,9 +105,9 @@ class CourseController extends Controller
 
         $course->delete();
 
-        return redirect()->route('courses.index')
-                         ->with('success', 'Course deleted successfully!');
+        return redirect()->back()->with([
+            'success' => 'Course deleted successfully!',
+            'courses' => Course::all()
+        ]);
     }
 }
-
-

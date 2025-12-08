@@ -2,16 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class RejectedEnrollment extends Model
+class EnrollmentDropout extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
         'student_id',
-        'enrollmentss_id', 
+        'enrollment_id',
         'reason'
     ];
 
@@ -22,6 +19,6 @@ class RejectedEnrollment extends Model
 
     public function enrollment()
     {
-        return $this->belongsTo(Enrollmentss::class, 'enrollmentss_id');
+        return $this->belongsTo(Enrollmentss::class);
     }
 }

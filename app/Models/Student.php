@@ -19,10 +19,15 @@ class Student extends Model
     'registration_date',
     'interested_course',
     'heard_about_us',
-    'status',
+    
     'termination_date',
     'location_id'
 ];
+// In Student model
+public function dropoutHistory()
+{
+    return $this->hasMany(EnrollmentDropout::class)->with('enrollment.course');
+}
 
     
 

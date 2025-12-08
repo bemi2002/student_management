@@ -9,15 +9,19 @@ use Illuminate\Support\Facades\Auth;
 
 class LocationController extends Controller
 {
-    // Define allowed actions for Admins
+    // Define allowed actions per role
     private $permissions = [
-        'Admin' => ['view', 'create', 'edit', 'delete'],
+        'Admin' => ['view','create','edit','delete'],
+        'Teacher' => ['view','create','edit','delete'],
     ];
 
-    // Check if the logged-in user has permission for the given action
+    /**
+     * Check if the logged-in user has permission for the given action
+     */
     private function checkPermission(string $action): bool
     {
         $user = Auth::user();
+        if (!$user) return false;
 
         foreach ($this->permissions as $role => $allowedActions) {
             if ($user->hasRole($role)) {
@@ -28,7 +32,9 @@ class LocationController extends Controller
         return false;
     }
 
-    // Authorization helper
+    /**
+     * DRY authorization helper
+     */
     private function authorizeAction(string $action)
     {
         if (!$this->checkPermission($action)) {
@@ -36,71 +42,57 @@ class LocationController extends Controller
         }
     }
 
-    // Display a listing of locations
     public function index()
     {
         $this->authorizeAction('view');
-
         $locations = Location::all();
 
-        return Inertia::render('Locations/Index', [
-            'locations' => $locations,
+        return Inertia::render('Settings/Index', [
+            'locations' => $locations
         ]);
     }
 
-    // Show the form for creating a new location
-    public function create()
-    {
-        $this->authorizeAction('create');
-
-        return Inertia::render('Locations/Create');
-    }
-
-    
     public function store(Request $request)
     {
         $this->authorizeAction('create');
 
-        $request->validate([
-            'name' => 'required|string|max:255',
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:locations,name',
         ]);
 
-        Location::create($request->all());
+        Location::create($validated);
 
-        return redirect()->route('locations.index')->with('success', 'Location created successfully!');
-    }
-
-    // Show the form for editing a location
-    public function edit(Location $location)
-    {
-        $this->authorizeAction('edit');
-
-        return Inertia::render('Locations/Edit', [
-            'location' => $location,
+        return redirect()->back()->with([
+            'success' => 'Location created successfully!',
+            'locations' => Location::all()
         ]);
     }
 
-    // Update the specified location
     public function update(Request $request, Location $location)
     {
         $this->authorizeAction('edit');
 
-        $request->validate([
-            'name' => 'required|string|max:255',
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:locations,name,' . $location->id,
         ]);
 
-        $location->update($request->all());
+        $location->update($validated);
 
-        return redirect()->route('locations.index')->with('success', 'Location updated successfully!');
+        return redirect()->back()->with([
+            'success' => 'Location updated successfully!',
+            'locations' => Location::all()
+        ]);
     }
 
-    // Delete the specified location
     public function destroy(Location $location)
     {
         $this->authorizeAction('delete');
 
         $location->delete();
 
-        return redirect()->route('locations.index')->with('success', 'Location deleted successfully!');
+        return redirect()->back()->with([
+            'success' => 'Location deleted successfully!',
+            'locations' => Location::all()
+        ]);
     }
 }

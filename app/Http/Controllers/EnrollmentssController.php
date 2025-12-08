@@ -8,11 +8,15 @@ use App\Models\RejectedEnrollment;
 use App\Models\Course;
 use App\Models\CourseType;
 use App\Models\CompanyAddress;
+
+use App\Models\EnrollmentDropout;
+
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class EnrollmentssController extends Controller
 {
@@ -46,25 +50,39 @@ class EnrollmentssController extends Controller
             'enrollments' => $enrollments,
             'courses' => Course::select('id', 'course_name')->get(),
             'courseTypes' => CourseType::select('id', 'course_type')->get(),
-            'companyAddresses' => CompanyAddress::select('id', 'company_name')->get(),
+            'companyAddresses' => CompanyAddress::select('id','city')->get(),
         ]);
     }
 
     // ==================== SHOW ====================
     public function show($id, Request $request)
-    {
-        $this->authorizeAction('view');
+{
+    $this->authorizeAction('view');
 
-        // Load the enrollment with relationships
-        $enrollment = Enrollmentss::with(['course', 'courseType', 'companyAddress', 'students'])
-            ->findOrFail($id);
+    // Load enrollment and related details
+    $enrollment = Enrollmentss::with([
+        'course', 
+        'courseType', 
+        'companyAddress',
+        'students' => function ($query) {
+            $query->select('students.id', 'full_name', 'email', 'contact_phone');
+        }
+    ])->findOrFail($id);
 
-        // Return Inertia response for page loads
-        return Inertia::render('Enrollmentss/Show', [
-            'enrollment' => $enrollment,
-            'availableStudentsUrl' => route('enrollmentss.available-students', $enrollment),
-        ]);
-    }
+    // ---- FIX: Separate assigned students properly ----
+    $assignedStudents = $enrollment->students;
+
+    // ---- FIX: Load dropout history ----
+    $dropoutHistory = $this->getDropoutHistory($id);
+
+    return Inertia::render('Enrollmentss/Show', [
+        'enrollment' => $enrollment,
+        'assignedStudents' => $assignedStudents,   // <--- ADDED
+        'dropoutHistory' => $dropoutHistory,       // <--- already correct
+        'availableStudentsUrl' => route('enrollmentss.available-students', $enrollment),
+    ]);
+}
+
 
     // ==================== CREATE ====================
     public function create()
@@ -74,7 +92,7 @@ class EnrollmentssController extends Controller
         return Inertia::render('Enrollmentss/Create', [
             'courses' => Course::select('id', 'course_name')->get(),
             'courseTypes' => CourseType::select('id', 'course_type')->get(),
-            'companyAddresses' => CompanyAddress::select('id', 'company_name')->get(),
+            'companyAddresses' => CompanyAddress::select('id', 'city')->get(),
         ]);
     }
 
@@ -94,6 +112,8 @@ class EnrollmentssController extends Controller
             'completion_status' => 'nullable|string|max:50',
             'telegram_link' => 'nullable|string|max:255',
             'enrollment_date' => 'nullable|date',
+            'organization' => 'nullable|string|max:255',
+
         ]);
 
         Enrollmentss::create($validated);
@@ -103,69 +123,63 @@ class EnrollmentssController extends Controller
     }
 
     // ==================== EDIT ====================
-      public function edit(Enrollmentss $enrollmentss)
+    public function edit(Enrollmentss $enrollmentss)
     {
         $this->authorizeAction('edit');
 
         return Inertia::render('Enrollmentss/Edit', [
-            'enrollmentss' => $enrollmentss, // must match prop in Vue
+            'enrollmentss' => $enrollmentss,
             'courses' => Course::select('id', 'course_name')->get(),
             'courseTypes' => CourseType::select('id', 'course_type')->get(),
-            'companyAddresses' => CompanyAddress::select('id', 'company_name')->get(),
+            'companyAddresses' => CompanyAddress::select('id', 'city')->get(),
         ]);
     }
     
     // ==================== UPDATE ====================
-public function update(Request $request, Enrollmentss $enrollmentss)
-{
-    $this->authorizeAction('edit');
+    public function update(Request $request, Enrollmentss $enrollmentss)
+    {
+        $this->authorizeAction('edit');
 
-    $validated = $request->validate([
-        'title' => 'required|string|max:255',
-        'description' => 'nullable|string|max:1000',
-        'course_id' => 'nullable|exists:courses,id',
-        'course_type_id' => 'nullable|exists:courses_type,id',
-        'company_address_id' => 'nullable|exists:company_addresses,id',
-        'student_capacity' => 'nullable|integer|min:0',
-        'amount_to_be_paid' => 'nullable|numeric|min:0',
-        'completion_status' => 'nullable|string|max:50',
-        'telegram_link' => 'nullable|string|max:255',
-        'enrollment_date' => 'nullable|date',
-    ]);
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string|max:1000',
+            'course_id' => 'nullable|exists:courses,id',
+            'course_type_id' => 'nullable|exists:courses_type,id',
+            'company_address_id' => 'nullable|exists:company_addresses,id',
+            'student_capacity' => 'nullable|integer|min:0',
+            'amount_to_be_paid' => 'nullable|numeric|min:0',
+            'completion_status' => 'nullable|string|max:50',
+            'telegram_link' => 'nullable|string|max:255',
+            'enrollment_date' => 'nullable|date',
+            'organization' => 'nullable|string|max:255',
 
-    $enrollmentss->update($validated);
+        ]);
 
-    // ✅ Return redirect to index page
-    return redirect()->route('enrollmentss.index')
-                     ->with('success', 'Enrollment updated successfully');
-}
+        $enrollmentss->update($validated);
 
+        return redirect()->route('enrollmentss.index')
+                         ->with('success', 'Enrollment updated successfully');
+    }
 
     // ==================== DELETE ====================
     public function destroy(Enrollmentss $enrollmentss)
-    {
-        $this->authorizeAction('delete');
+{
+    $this->authorizeAction('delete');
 
-        // Detach related students first
-        if ($enrollmentss->students()->count() > 0) {
-            $enrollmentss->students()->detach();
-        }
-
-        $enrollmentss->delete();
-
-        // Return JSON for Inertia router.delete
-        return response()->json([
-            'success' => true,
-            'message' => 'Enrollment deleted successfully',
-        ]);
+    // Detach related students first
+    if ($enrollmentss->students()->count() > 0) {
+        $enrollmentss->students()->detach();
     }
 
+    $enrollmentss->delete();
 
+    return redirect()->route('enrollmentss.index')
+        ->with('success', 'Enrollment deleted successfully');
+}
     // ==================== AVAILABLE STUDENTS ====================
     public function availableStudents(Enrollmentss $enrollmentss)
     {
         try {
-            // Use whereDoesntHave to avoid ambiguous column issues
             $students = Student::whereDoesntHave('enrollmentss', function($query) use ($enrollmentss) {
                     $query->where('enrollmentss_id', $enrollmentss->id);
                 })
@@ -190,13 +204,12 @@ public function update(Request $request, Enrollmentss $enrollmentss)
         }
     }
 
-    // ==================== ASSIGN STUDENT - FIXED VERSION ====================
+    // ==================== ASSIGN STUDENT ====================
     public function assignStudent(Request $request, $enrollmentId)
     {
         try {
             $this->authorizeAction('assign');
 
-            // Find the enrollment
             $enrollment = Enrollmentss::findOrFail($enrollmentId);
 
             $validated = $request->validate([
@@ -238,9 +251,7 @@ public function update(Request $request, Enrollmentss $enrollmentss)
             }
 
             // Remove from rejected enrollments if exists
-            RejectedEnrollment::where('student_id', $validated['student_id'])
-                ->where('enrollmentss_id', $enrollment->id)
-                ->delete();
+            $this->removeFromRejectedEnrollments($validated['student_id'], $enrollment->id);
 
             return response()->json([
                 'success' => true,
@@ -256,7 +267,6 @@ public function update(Request $request, Enrollmentss $enrollmentss)
             ], 422);
         } catch (\Exception $e) {
             Log::error('Error assigning student to enrollment ' . $enrollmentId . ': ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
             
             return response()->json([
                 'success' => false,
@@ -271,7 +281,6 @@ public function update(Request $request, Enrollmentss $enrollmentss)
         try {
             $this->authorizeAction('unassign');
 
-            // Find the enrollment
             $enrollment = Enrollmentss::findOrFail($enrollmentId);
 
             $validated = $request->validate([
@@ -294,7 +303,9 @@ public function update(Request $request, Enrollmentss $enrollmentss)
             // Detach the student
             $enrollment->students()->detach($validated['student_id']);
 
-            // Log the reason (optional)
+            // Create dropout history record if table exists and has correct structure
+            $this->createRejectedEnrollmentRecord($validated['student_id'], $enrollmentId, $validated['reason']);
+
             Log::info("Student {$validated['student_id']} removed from enrollment {$enrollmentId}. Reason: {$validated['reason']}");
 
             return response()->json([
@@ -316,4 +327,54 @@ public function update(Request $request, Enrollmentss $enrollmentss)
             ], 500);
         }
     }
+
+    // ==================== PRIVATE METHODS ====================
+
+   private function getDropoutHistory($enrollmentId)
+{
+    try {
+        return EnrollmentDropout::with([
+                'student:id,full_name,email,contact_phone'
+            ])
+            ->where('enrollment_id', $enrollmentId)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+    } catch (\Exception $e) {
+        Log::error('Error fetching dropout history: ' . $e->getMessage());
+        return collect([]);
+    }
+}
+
+    private function removeFromRejectedEnrollments($studentId, $enrollmentId)
+{
+    try {
+        EnrollmentDropout::where('student_id', $studentId)
+            ->where('enrollment_id', $enrollmentId)
+            ->delete();
+
+    } catch (\Exception $e) {
+        Log::error('Error removing dropout record: ' . $e->getMessage());
+    }
+}
+
+private function createRejectedEnrollmentRecord($studentId, $enrollmentId, $reason)
+{
+    try {
+        EnrollmentDropout::create([
+            'student_id'    => $studentId,
+            'enrollment_id' => $enrollmentId,
+            'reason'        => $reason,
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error('Error creating dropout record: ' . $e->getMessage());
+    }
+}
+public function listSimple()
+{
+    return Enrollmentss::select('id', 'title')->orderBy('title')->get();
+}
+
+
 }

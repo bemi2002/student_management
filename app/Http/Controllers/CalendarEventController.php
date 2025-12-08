@@ -2,54 +2,63 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CalendarEvent;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
+use App\Models\CalendarEvent;
+use App\Models\Enrollmentss;
 
 class CalendarEventController extends Controller
 {
-    // Display all events - return JSON
-    public function index(): JsonResponse
+    // GET /calendar-events
+    public function index()
     {
-        $events = CalendarEvent::orderBy('start', 'asc')->get();
-        return response()->json($events);
+        return CalendarEvent::with('enrollmentss')->orderBy('start', 'asc')->get();
     }
 
-    // Store new event - return JSON
-    public function store(Request $request): JsonResponse
+    // GET /enrollmentss
+    public function enrollments()
+    {
+        return Enrollmentss::orderBy('id', 'desc')->get();
+    }
+
+    // POST /calendar-events
+    public function store(Request $request)
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'nullable|string',
             'start' => 'required|date',
-            'end' => 'nullable|date|after:start'
+            'end' => 'nullable|date|after_or_equal:start',
+            'enrollmentss_id' => 'nullable|integer|exists:enrollmentss,id', // FIXED
         ]);
 
         $event = CalendarEvent::create($validated);
+        $event->load('enrollmentss');
 
-        return response()->json($event, 201);
+        return response()->json(['event' => $event], 201);
     }
 
-    // Update event - return JSON
-    public function update(Request $request, CalendarEvent $calendarEvent): JsonResponse
+    // PUT /calendar-events/{calendarEvent}
+    public function update(Request $request, CalendarEvent $calendarEvent)
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'nullable|string',
             'start' => 'required|date',
-            'end' => 'nullable|date|after:start'
+            'end' => 'nullable|date|after_or_equal:start',
+            'enrollmentss_id' => 'nullable|integer|exists:enrollmentss,id', // FIXED
         ]);
 
         $calendarEvent->update($validated);
+        $calendarEvent->load('enrollmentss');
 
         return response()->json($calendarEvent);
     }
 
-    // Delete event - return JSON
-    public function destroy(CalendarEvent $calendarEvent): JsonResponse
+    // DELETE /calendar-events/{calendarEvent}
+    public function destroy(CalendarEvent $calendarEvent)
     {
         $calendarEvent->delete();
 
-        return response()->json(['message' => 'Event deleted successfully.']);
+        return response()->json(['message' => 'Event deleted successfully']);
     }
 }

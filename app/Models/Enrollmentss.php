@@ -22,6 +22,7 @@ class Enrollmentss extends Model
         'telegram_link',
         'enrollment',
         'enrollment_date',
+        'organization',
     ];
 
     protected $casts = [

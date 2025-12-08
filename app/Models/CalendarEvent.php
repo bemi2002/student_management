@@ -2,22 +2,21 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class CalendarEvent extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
         'title',
         'content',
         'start',
-        'end'
+        'end',
+        'enrollmentss_id',
     ];
 
-    protected $casts = [
-        'start' => 'datetime',
-        'end' => 'datetime',
-    ];
+    // Relationship to Enrollmentss
+    public function enrollmentss()
+    {
+        return $this->belongsTo(\App\Models\Enrollmentss::class, 'enrollmentss_id');
+    }
 }

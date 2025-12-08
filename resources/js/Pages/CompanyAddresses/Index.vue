@@ -8,7 +8,6 @@ defineProps({
   }
 })
 
-// Form helper for delete
 const form = useForm()
 
 function deleteCompany(id) {
@@ -25,6 +24,7 @@ function deleteCompany(id) {
   <div class="max-w-7xl mx-auto bg-white p-8 rounded-xl shadow mt-10">
     <div class="flex justify-between items-center mb-6">
       <h2 class="text-2xl font-bold">Company Addresses</h2>
+
       <Link
         href="/company-addresses/create"
         class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
@@ -38,14 +38,10 @@ function deleteCompany(id) {
         <thead class="bg-gray-50">
           <tr>
             <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">ID</th>
-            <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Company Name</th>
-            <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Email</th>
-            <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Phone</th>
             <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">City</th>
             <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Sub City</th>
             <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Building Name</th>
             <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Building Number</th>
-            <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Website</th>
             <th class="px-4 py-2 text-right text-sm font-medium text-gray-500">Actions</th>
           </tr>
         </thead>
@@ -53,14 +49,11 @@ function deleteCompany(id) {
         <tbody class="bg-white divide-y divide-gray-200">
           <tr v-for="company in companies" :key="company.id" class="hover:bg-gray-50 transition">
             <td class="px-4 py-2 text-sm text-gray-700">{{ company.id }}</td>
-            <td class="px-4 py-2 text-sm text-gray-700">{{ company.company_name }}</td>
-            <td class="px-4 py-2 text-sm text-gray-700">{{ company.email }}</td>
-            <td class="px-4 py-2 text-sm text-gray-700">{{ company.contact_phone }}</td>
             <td class="px-4 py-2 text-sm text-gray-700">{{ company.city }}</td>
             <td class="px-4 py-2 text-sm text-gray-700">{{ company.sub_city || '-' }}</td>
             <td class="px-4 py-2 text-sm text-gray-700">{{ company.building_name || '-' }}</td>
             <td class="px-4 py-2 text-sm text-gray-700">{{ company.building_number || '-' }}</td>
-            <td class="px-4 py-2 text-sm text-gray-700">{{ company.website || '-' }}</td>
+
             <td class="px-4 py-2 text-right text-sm font-medium flex justify-end gap-2">
               <Link
                 :href="`/company-addresses/${company.id}/edit`"
@@ -68,6 +61,7 @@ function deleteCompany(id) {
               >
                 Edit
               </Link>
+
               <button
                 @click="deleteCompany(company.id)"
                 class="text-red-600 hover:text-red-900 font-semibold"
@@ -78,7 +72,7 @@ function deleteCompany(id) {
           </tr>
 
           <tr v-if="companies.length === 0">
-            <td colspan="10" class="px-4 py-4 text-center text-gray-500">
+            <td colspan="6" class="px-4 py-4 text-center text-gray-500">
               No companies found.
             </td>
           </tr>

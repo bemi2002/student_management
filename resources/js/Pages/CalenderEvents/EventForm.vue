@@ -25,6 +25,22 @@
       <div v-if="errors.content" class="text-red-500 text-sm mt-1">{{ errors.content }}</div>
     </div>
 
+    <!-- Enrollment -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Enrollment *</label>
+      <select
+        v-model.number="form.enrollmentss_id"
+        required
+        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      >
+        <option value="" disabled>Select enrollment</option>
+        <option v-for="enrollment in enrollments" :key="enrollment.id" :value="enrollment.id">
+          {{ enrollment.id }} - {{ enrollment.title }} - {{ enrollment.enrollment_date }}
+        </option>
+      </select>
+      <div v-if="errors.enrollmentss_id" class="text-red-500 text-sm mt-1">{{ errors.enrollmentss_id }}</div>
+    </div>
+
     <!-- Start Date -->
     <div>
       <label class="block text-sm font-medium text-gray-700 mb-1">Start Date *</label>
@@ -73,12 +89,9 @@
 import { ref, reactive, watch } from 'vue'
 
 const props = defineProps({
-  event: {
-    type: Object,
-    default: null
-  }
+  event: { type: Object, default: null },
+  enrollments: { type: Array, default: () => [] }
 })
-
 const emit = defineEmits(['save', 'cancel'])
 
 const loading = ref(false)
@@ -88,47 +101,46 @@ const form = reactive({
   title: '',
   content: '',
   start: '',
-  end: ''
+  end: '',
+  enrollmentss_id: ''
 })
 
 // Format date for datetime-local input
 const formatDateForInput = (dateString) => {
   if (!dateString) return ''
   const date = new Date(dateString)
-  return date.toISOString().slice(0, 16)
+  return date.toISOString().slice(0,16)
 }
 
-// Initialize form when event prop changes
+// Initialize form
 watch(() => props.event, (newEvent) => {
   if (newEvent) {
     form.title = newEvent.title || ''
     form.content = newEvent.content || ''
     form.start = formatDateForInput(newEvent.start)
     form.end = formatDateForInput(newEvent.end)
+    form.enrollmentss_id = newEvent.enrollmentss_id || ''
   } else {
-    // Reset form for new event
     form.title = ''
     form.content = ''
     form.start = formatDateForInput(new Date())
     form.end = ''
+    form.enrollmentss_id = ''
   }
 }, { immediate: true })
 
-// Form submission
+// Submit form
 const submit = async () => {
   loading.value = true
   errors.value = {}
-
   try {
-    // Prepare data for API
-    const eventData = {
+    emit('save', { 
       title: form.title,
-      content: form.content,
+      content: form.content || null,
       start: form.start,
-      end: form.end || null
-    }
-
-    emit('save', eventData)
+      end: form.end || null,
+      enrollmentss_id: Number(form.enrollmentss_id)
+    })
   } catch (error) {
     console.error('Form error:', error)
   } finally {

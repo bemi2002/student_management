@@ -64,8 +64,8 @@
           </div>
         </div>
 
-        <!-- Modal Trigger Button -->
-        <div class="mb-6">
+        <!-- Modal Trigger Buttons -->
+        <div class="mb-6 flex space-x-4">
           <button 
             @click="showModal = true"
             class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
@@ -75,9 +75,20 @@
             </svg>
             Manage Enrollment Details
           </button>
+
+          <!-- Dropout History Button -->
+          <button 
+            @click="showDropoutHistory = true"
+            class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+          >
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+            </svg>
+            View Dropout History
+          </button>
         </div>
 
-        <!-- Modal Overlay -->
+        <!-- Main Modal Overlay -->
         <div v-if="showModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div class="relative top-20 mx-auto p-5 border w-full max-w-7xl shadow-lg rounded-md bg-white max-h-[90vh] overflow-y-auto">
             
@@ -94,7 +105,7 @@
               </button>
             </div>
 
-            <!-- Modal Content - Your existing grid layout -->
+            <!-- Modal Content -->
             <div class="mt-4">
               <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <!-- Left Column - Enrollment Details -->
@@ -126,7 +137,7 @@
                       
                       <div class="flex justify-between">
                         <span class="text-sm font-medium text-gray-500">Amount to be Paid</span>
-                        <span class="text-sm text-gray-900">{{ formatCurrency(enrollment.amount_to_be_paid) }}</span>
+                        <span class="text-sm text-gray-900">{{(enrollment.amount_to_be_paid) }}</span>
                       </div>
                     </div>
                   </div>
@@ -149,7 +160,7 @@
                       
                       <div v-if="enrollment.company_address">
                         <span class="text-sm font-medium text-gray-500 block mb-1">Company</span>
-                        <span class="text-sm text-gray-900">{{ enrollment.company_address.company_name }}</span>
+                        <span class="text-sm text-gray-900">{{ enrollment.company_address.city }}</span>
                       </div>
                     </div>
                   </div>
@@ -181,6 +192,16 @@
                         </svg>
                         Join Telegram
                       </a>
+
+                      <button 
+                        @click="showDropoutHistory = true; showModal = false;"
+                        class="w-full flex items-center justify-center px-4 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                      >
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                        View Dropout History
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -227,25 +248,49 @@
                                 <p v-if="student.contact_phone" class="text-xs text-gray-400">{{ student.contact_phone }}</p>
                               </div>
                             </div>
-                            <button 
-                              @click="dropoutStudent(student.id)" 
-                              class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                              :disabled="processingStudent === student.id"
-                            >
-                              <span v-if="processingStudent === student.id" class="flex items-center">
-                                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-red-700" fill="none" viewBox="0 0 24 24">
-                                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                Removing...
-                              </span>
-                              <span v-else class="flex items-center">
-                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                </svg>
-                                Dropout
-                              </span>
-                            </button>
+                            <div class="flex space-x-2">
+                              <!-- Unassign Button (Works like Dropout but with default reason) -->
+                              <button 
+                                @click="unassignStudent(student.id)" 
+                                class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                :disabled="processingStudent === student.id"
+                              >
+                                <span v-if="processingStudent === student.id" class="flex items-center">
+                                  <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-red-700" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                  </svg>
+                                  Unassigning...
+                                </span>
+                                <span v-else class="flex items-center">
+                                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                  </svg>
+                                  Unassign
+                                </span>
+                              </button>
+
+                              <!-- Dropout Button (Custom reason) -->
+                              <button 
+                                @click="dropoutStudent(student.id)" 
+                                class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                :disabled="processingStudent === student.id"
+                              >
+                                <span v-if="processingStudent === student.id" class="flex items-center">
+                                  <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                  </svg>
+                                  Dropping...
+                                </span>
+                                <span v-else class="flex items-center">
+                                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                  </svg>
+                                  Dropout
+                                </span>
+                              </button>
+                            </div>
                           </div>
                         </li>
                       </ul>
@@ -342,6 +387,118 @@
             </div>
           </div>
         </div>
+
+        <!-- Dropout History Modal -->
+        <div v-if="showDropoutHistory" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div class="relative top-20 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white max-h-[90vh] overflow-y-auto">
+            
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center pb-3 border-b">
+              <h3 class="text-2xl font-bold text-gray-900">Dropout History - {{ enrollment.title }}</h3>
+              <button 
+                @click="showDropoutHistory = false"
+                class="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Dropout History Content -->
+            <div class="mt-4">
+              <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                  <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-medium text-gray-900">Student Dropout Records</h3>
+                    <span class="text-sm text-gray-500">{{ dropoutHistory.length }} records</span>
+                  </div>
+                </div>
+                
+                <div class="p-6">
+                  <div v-if="loading" class="text-center py-8">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <p class="mt-2 text-sm text-gray-600">Loading dropout history...</p>
+                  </div>
+                  
+                  <div v-else-if="dropoutHistory.length === 0" class="text-center py-8">
+                    <svg class="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                    <h4 class="mt-2 text-sm font-medium text-gray-900">No dropout history</h4>
+                    <p class="mt-1 text-sm text-gray-500">No students have been dropped out from this enrollment yet.</p>
+                  </div>
+                  
+                  <ul v-else class="divide-y divide-gray-200">
+                    <li v-for="record in dropoutHistory" :key="record.id" class="py-4">
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                          <div class="flex-shrink-0">
+                            <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                              <span class="text-red-600 font-semibold text-sm">
+                                {{ getInitials(record.student?.full_name) }}
+                              </span>
+                            </div>
+                          </div>
+                          <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900 truncate">
+                              {{ record.student?.full_name || 'Unknown Student' }}
+                            </p>
+                            <p v-if="record.student?.email" class="text-sm text-gray-500 truncate">
+                              {{ record.student.email }}
+                            </p>
+                            <p class="text-sm text-gray-600 mt-1">
+                              <span class="font-medium">Reason:</span> {{ record.reason }}
+                            </p>
+                            <p class="text-xs text-gray-400 mt-1">
+                              Dropped out on {{ formatDate(record.created_at) }}
+                            </p>
+                          </div>
+                        </div>
+                        <button 
+                          @click="reassignStudent(record.student_id)" 
+                          class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                          :disabled="processingStudent === record.student_id"
+                          v-if="record.student && !isCapacityReached"
+                        >
+                          <span v-if="processingStudent === record.student_id" class="flex items-center">
+                            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-green-700" fill="none" viewBox="0 0 24 24">
+                              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Reassigning...
+                          </span>
+                          <span v-else class="flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            Reassign
+                          </span>
+                        </button>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Dropout History Modal Footer -->
+            <div class="flex justify-end pt-6 border-t mt-6">
+              <button 
+                @click="showDropoutHistory = false"
+                class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors mr-3"
+              >
+                Close
+              </button>
+              <button 
+                @click="showModal = true; showDropoutHistory = false;"
+                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                Back to Management
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </AuthenticatedLayout>
@@ -355,16 +512,19 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 
 const props = defineProps({
   enrollment: Object,
-  availableStudentsUrl: String
+  availableStudentsUrl: String,
+  dropoutHistory: Array
 })
 
-// Add modal state
+// Modal states
 const showModal = ref(false)
+const showDropoutHistory = ref(false)
 
-// Your existing reactive variables and functions remain exactly the same
+// Reactive variables
 const selectedStudent = ref('')
 const availableStudents = ref([])
 const assignedStudents = ref([])
+const dropoutHistory = ref([])
 const loading = ref(false)
 const loadingAvailable = ref(false)
 const assigningStudent = ref(false)
@@ -372,23 +532,29 @@ const processingStudent = ref(null)
 const successMessage = ref('')
 const errorMessage = ref('')
 
-// Initialize assignedStudents from props
-assignedStudents.value = Array.isArray(props.enrollment.students) 
+// FIXED: Better initialization with fallbacks
+// Initialize assignedStudents from props with proper error handling
+assignedStudents.value = Array.isArray(props.enrollment?.students) 
   ? [...props.enrollment.students] 
+  : []
+
+// Initialize dropout history from props with proper error handling
+dropoutHistory.value = Array.isArray(props.dropoutHistory) 
+  ? [...props.dropoutHistory] 
   : []
 
 // Computed property to check capacity
 const isCapacityReached = computed(() => {
-  if (!props.enrollment.student_capacity) return false
+  if (!props.enrollment?.student_capacity) return false
   return assignedStudents.value.length >= props.enrollment.student_capacity
 })
 
-// Watch for changes in props.enrollment.students
-watch(() => props.enrollment.students, (newStudents) => {
+// FIXED: Better watcher with null checks
+watch(() => props.enrollment?.students, (newStudents) => {
   assignedStudents.value = Array.isArray(newStudents) ? [...newStudents] : []
 }, { immediate: true, deep: true })
 
-// All your existing helper functions remain exactly the same
+// Helper functions
 const getInitials = (fullName) => {
   if (!fullName) return '??'
   return fullName
@@ -442,7 +608,7 @@ const clearMessages = () => {
   errorMessage.value = ''
 }
 
-// All your existing functions (fetchAvailableStudents, fetchAssignedStudents, assignStudent, dropoutStudent, refreshData, etc.) remain exactly the same
+// Data fetching functions
 async function fetchAvailableStudents() {
   if (!props.availableStudentsUrl) return
   
@@ -459,6 +625,7 @@ async function fetchAvailableStudents() {
   }
 }
 
+// FIXED: Better fetch for assigned students
 async function fetchAssignedStudents() {
   loading.value = true
   try {
@@ -469,7 +636,11 @@ async function fetchAssignedStudents() {
       }
     })
     
-    if (res.data.enrollment && res.data.enrollment.students) {
+    // Debug log to see the response structure
+    console.log('Enrollment API Response:', res.data)
+    
+    // Multiple fallback approaches to find students data
+    if (res.data.enrollment?.students) {
       assignedStudents.value = Array.isArray(res.data.enrollment.students) 
         ? [...res.data.enrollment.students] 
         : []
@@ -477,15 +648,41 @@ async function fetchAssignedStudents() {
       assignedStudents.value = Array.isArray(res.data.students) 
         ? [...res.data.students] 
         : []
+    } else if (res.data.data?.enrollment?.students) {
+      assignedStudents.value = Array.isArray(res.data.data.enrollment.students) 
+        ? [...res.data.data.enrollment.students] 
+        : []
+    } else {
+      // If no students found, ensure it's an empty array
+      assignedStudents.value = []
     }
+    
+    console.log('Final assigned students:', assignedStudents.value)
+    
   } catch (err) {
     console.error('Failed to fetch assigned students:', err)
     showError('Failed to load assigned students')
+    assignedStudents.value = [] // Ensure it's always an array
   } finally {
     loading.value = false
   }
 }
 
+async function fetchDropoutHistory() {
+  try {
+    const res = await axios.get(`/enrollmentss/${props.enrollment.id}`)
+    if (res.data.dropoutHistory) {
+      dropoutHistory.value = Array.isArray(res.data.dropoutHistory) 
+        ? [...res.data.dropoutHistory] 
+        : []
+    }
+  } catch (err) {
+    console.error('Failed to fetch dropout history:', err)
+    showError('Failed to load dropout history')
+  }
+}
+
+// Student management functions
 async function assignStudent() {
   if (!selectedStudent.value) return
 
@@ -496,8 +693,6 @@ async function assignStudent() {
     const response = await axios.post(`/enrollmentss/${props.enrollment.id}/assign-student`, {
       student_id: selectedStudent.value
     })
-    
-    console.log('Assignment response:', response.data)
     
     if (response.data.success) {
       let assignedStudentData = response.data.student
@@ -537,38 +732,127 @@ async function assignStudent() {
   }
 }
 
-async function dropoutStudent(studentId) {
-  const reason = prompt('Please enter the reason for removing this student:')
-  if (!reason) return
+// Unassign student (works like dropout but with default reason "Unassigned by admin")
+async function unassignStudent(studentId) {
+  const confirmed = confirm('Are you sure you want to unassign this student? This will mark them as dropout with reason "Unassigned by admin".')
+  if (!confirmed) return
 
   processingStudent.value = studentId
   clearMessages()
   
   try {
+    // First, get the student data before removing them
+    const studentToUnassign = assignedStudents.value.find(student => student.id == studentId)
+    
+    if (!studentToUnassign) {
+      showError('Student not found in assigned students')
+      return
+    }
+
+    const response = await axios.post(`/enrollmentss/${props.enrollment.id}/unassign-student`, {
+      student_id: studentId,
+      reason: 'Unassigned by admin' // Default reason
+    })
+    
+    if (response.data.success) {
+      // Remove from assigned students
+      assignedStudents.value = assignedStudents.value.filter(student => student.id != studentId)
+      await nextTick()
+      
+      // Create a temporary record with student data for immediate UI update
+      const tempDropoutRecord = {
+        id: `temp-${Date.now()}`,
+        student_id: studentId,
+        reason: 'Unassigned by admin',
+        created_at: new Date().toISOString(),
+        student: studentToUnassign
+      }
+      
+      // Add to dropout history for immediate display
+      dropoutHistory.value.unshift(tempDropoutRecord)
+      
+      // Refresh from server to get the actual record with proper relationships
+      await fetchDropoutHistory()
+      
+      // Auto-open dropout history modal
+      showDropoutHistory.value = true
+      showModal.value = false
+      
+      showSuccess(response.data.message || 'Student unassigned successfully (marked as dropout)')
+    } else {
+      showError(response.data.message || 'Failed to unassign student')
+    }
+    
+  } catch (err) {
+    console.error('Unassign error:', err)
+    
+    if (err.response?.data?.message) {
+      showError(err.response.data.message)
+    } else if (err.response?.data?.error) {
+      showError(err.response.data.error)
+    } else {
+      showError('Failed to unassign student. Please try again.')
+    }
+    
+    await refreshData()
+  } finally {
+    processingStudent.value = null
+  }
+}
+
+// Dropout student (custom reason)
+async function dropoutStudent(studentId) {
+  const reason = prompt('Please enter the dropout reason for this student:', '')
+  if (reason === null) return // User cancelled
+  if (!reason.trim()) {
+    showError('Please enter a dropout reason')
+    return
+  }
+
+  processingStudent.value = studentId
+  clearMessages()
+  
+  try {
+    // First, get the student data before removing them
+    const studentToDropout = assignedStudents.value.find(student => student.id == studentId)
+    
+    if (!studentToDropout) {
+      showError('Student not found in assigned students')
+      return
+    }
+
     const response = await axios.post(`/enrollmentss/${props.enrollment.id}/unassign-student`, {
       student_id: studentId,
       reason: reason
     })
     
-    console.log('Unassign response:', response.data)
-    
     if (response.data.success) {
-      const removedStudent = assignedStudents.value.find(student => student.id == studentId)
+      // Remove from assigned students
+      assignedStudents.value = assignedStudents.value.filter(student => student.id != studentId)
+      await nextTick()
       
-      if (removedStudent) {
-        assignedStudents.value = assignedStudents.value.filter(student => student.id != studentId)
-        const alreadyInAvailable = availableStudents.value.some(student => student.id == studentId)
-        if (!alreadyInAvailable && removedStudent) {
-          availableStudents.value.push({...removedStudent})
-        }
-        await nextTick()
-      } else {
-        await refreshData()
+      // Create a temporary record with student data for immediate UI update
+      const tempDropoutRecord = {
+        id: `temp-${Date.now()}`,
+        student_id: studentId,
+        reason: reason,
+        created_at: new Date().toISOString(),
+        student: studentToDropout
       }
       
-      showSuccess(response.data.message || 'Student removed from enrollment')
+      // Add to dropout history for immediate display
+      dropoutHistory.value.unshift(tempDropoutRecord)
+      
+      // Refresh from server to get the actual record with proper relationships
+      await fetchDropoutHistory()
+      
+      // Auto-open dropout history modal
+      showDropoutHistory.value = true
+      showModal.value = false
+      
+      showSuccess(response.data.message || 'Student marked as dropout successfully')
     } else {
-      showError(response.data.message || 'Failed to remove student')
+      showError(response.data.message || 'Failed to mark student as dropout')
     }
     
   } catch (err) {
@@ -579,7 +863,7 @@ async function dropoutStudent(studentId) {
     } else if (err.response?.data?.error) {
       showError(err.response.data.error)
     } else {
-      showError('Failed to remove student. Please try again.')
+      showError('Failed to mark student as dropout. Please try again.')
     }
     
     await refreshData()
@@ -588,11 +872,51 @@ async function dropoutStudent(studentId) {
   }
 }
 
+// Reassign student from dropout history
+async function reassignStudent(studentId) {
+  processingStudent.value = studentId
+  clearMessages()
+  
+  try {
+    const response = await axios.post(`/enrollmentss/${props.enrollment.id}/assign-student`, {
+      student_id: studentId
+    })
+    
+    if (response.data.success) {
+      // Remove from dropout history
+      dropoutHistory.value = dropoutHistory.value.filter(record => record.student_id !== studentId)
+      
+      // Add to assigned students if student data is available
+      if (response.data.student) {
+        assignedStudents.value.push({...response.data.student})
+      } else {
+        await refreshData()
+      }
+      
+      showSuccess('Student reassigned successfully!')
+    } else {
+      showError(response.data.message || 'Failed to reassign student')
+    }
+    
+  } catch (err) {
+    console.error('Reassign error:', err)
+    
+    if (err.response?.data?.message) {
+      showError(err.response.data.message)
+    } else {
+      showError('Failed to reassign student. Please try again.')
+    }
+  } finally {
+    processingStudent.value = null
+  }
+}
+
+// Refresh functions
 async function refreshData() {
   loading.value = true
   try {
     router.reload({ 
-      only: ['enrollment'],
+      only: ['enrollment', 'dropoutHistory'],
       preserveScroll: true,
       onSuccess: () => {
         showSuccess('Data refreshed successfully!')
@@ -611,7 +935,8 @@ async function refreshDataAxios() {
   try {
     await Promise.all([
       fetchAssignedStudents(),
-      fetchAvailableStudents()
+      fetchAvailableStudents(),
+      fetchDropoutHistory()
     ])
     showSuccess('Data refreshed successfully!')
   } catch (err) {

@@ -3,7 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Student;
-use App\Models\Location; // <-- Import Location model
+use App\Models\Location;
+use App\Models\EnrollmentDropout; // Import the dropout model
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
@@ -32,7 +33,7 @@ class StudentController extends Controller
     public function index()
     {
         $this->authorizeAction('view');
-        $students = Student::with('location')->get(); // load location
+        $students = Student::with('location')->get();
         return Inertia::render('Students/Index', ['students' => $students]);
     }
 
@@ -40,7 +41,7 @@ class StudentController extends Controller
     {
         $this->authorizeAction('create');
 
-        $locations = Location::all(); // fetch locations
+        $locations = Location::all();
         return Inertia::render('Students/Create', ['locations' => $locations]);
     }
 
@@ -55,9 +56,8 @@ class StudentController extends Controller
             'registration_date' => 'nullable|date',
             'interested_course' => 'nullable|string|max:255',
             'heard_about_us' => 'nullable|string|max:255',
-            'status' => 'required|string',
             'termination_date' => 'nullable|date',
-            'location_id' => 'required|exists:locations,id', // validate location
+            'location_id' => 'required|exists:locations,id',
         ]);
 
         Student::create($validated);
@@ -69,7 +69,7 @@ class StudentController extends Controller
     {
         $this->authorizeAction('edit');
 
-        $locations = Location::all(); // fetch locations
+        $locations = Location::all();
         return Inertia::render('Students/Edit', [
             'student' => $student,
             'locations' => $locations
@@ -87,9 +87,8 @@ class StudentController extends Controller
             'registration_date' => 'nullable|date',
             'interested_course' => 'nullable|string|max:255',
             'heard_about_us' => 'nullable|string|max:255',
-            'status' => 'required|string',
             'termination_date' => 'nullable|date',
-            'location_id' => 'required|exists:locations,id', // validate location
+            'location_id' => 'required|exists:locations,id',
         ]);
 
         $student->update($validated);
@@ -112,13 +111,15 @@ class StudentController extends Controller
         $student->load([
             'enrollments.course',
             'rejectedEnrollments.enrollment.course',
-            'location'
+            'location',
+            'dropoutHistory.enrollment.course' // Load dropout history with enrollment and course
         ]);
 
         return Inertia::render('Students/Show', [
             'student' => $student,
             'enrollments' => $student->enrollments,
             'rejectedEnrollments' => $student->rejectedEnrollments,
+            'dropout_history' => $student->dropoutHistory, // Pass dropout history to frontend
         ]);
     }
 
@@ -141,10 +142,34 @@ class StudentController extends Controller
 
         $validated = $request->validate([
             'enrollment_id' => 'required|exists:enrollmentss,id',
+            'reason' => 'required|string|max:500', // Add reason for dropout
         ]);
 
+        // Remove from enrollments
         $student->enrollments()->detach($validated['enrollment_id']);
 
-        return back()->with('success', 'Student unassigned successfully.');
+        // Create dropout record
+        EnrollmentDropout::create([
+            'student_id' => $student->id,
+            'enrollment_id' => $validated['enrollment_id'],
+            'reason' => $validated['reason'],
+        ]);
+
+        return back()->with('success', 'Student unassigned and dropout recorded successfully.');
+    }
+
+    // New method to get available enrollments for assignment
+    public function getAvailableEnrollments(Student $student)
+    {
+        $this->authorizeAction('assign');
+
+        // Get enrollments that the student is not currently enrolled in
+        $currentEnrollmentIds = $student->enrollments()->pluck('enrollmentss.id');
+        
+        $availableEnrollments = \App\Models\Enrollmentss::with('course')
+            ->whereNotIn('id', $currentEnrollmentIds)
+            ->get();
+
+        return response()->json($availableEnrollments);
     }
 }
