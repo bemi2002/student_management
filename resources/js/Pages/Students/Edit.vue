@@ -7,12 +7,12 @@
     <div class="container mx-auto px-4 py-8">
       <div class="max-w-4xl mx-auto">
         <!-- Header Card -->
-        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl shadow-lg mb-8 overflow-hidden">
+        <div class="bg-gradient-to-r from-sky-600 to-blue-500 rounded-xl shadow-lg mb-8 overflow-hidden">
           <div class="p-6">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
               <div class="mb-4 md:mb-0">
                 <h1 class="text-3xl font-bold text-white">Edit Student</h1>
-                <p class="text-blue-100 mt-2">Update student information in the system</p>
+                <p class="text-sky-100 mt-2">Update student information in the system</p>
               </div>
               <Link 
                 :href="route('students.index')" 
@@ -30,19 +30,19 @@
         <!-- Validation Errors -->
         <div 
           v-if="Object.keys(form.errors).length" 
-          class="bg-gradient-to-r from-red-50 to-rose-50 border-l-4 border-red-500 shadow-md rounded-r-lg mb-8 animate-pulse-once"
+          class="bg-gradient-to-r from-rose-50 to-red-50 border-l-4 border-rose-500 shadow-md rounded-r-lg mb-8 animate-pulse-once"
         >
           <div class="p-6">
             <div class="flex items-center mb-3">
               <div class="flex-shrink-0">
-                <svg class="h-6 w-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="h-6 w-6 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
               </div>
-              <h3 class="ml-3 text-lg font-semibold text-red-800">Please fix the following errors:</h3>
+              <h3 class="ml-3 text-lg font-semibold text-rose-800">Please fix the following errors:</h3>
             </div>
             <ul class="mt-2 list-disc list-inside space-y-1">
-              <li v-for="(error, key) in form.errors" :key="key" class="text-red-700 font-medium">
+              <li v-for="(error, key) in form.errors" :key="key" class="text-rose-700 font-medium">
                 {{ error[0] }}
               </li>
             </ul>
@@ -52,10 +52,10 @@
         <!-- Form Card -->
         <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
           <!-- Card Header -->
-          <div class="bg-gradient-to-r from-gray-50 to-blue-50 px-8 py-6 border-b border-gray-200">
+          <div class="bg-gradient-to-r from-gray-50 to-sky-50 px-8 py-6 border-b border-gray-200">
             <div class="flex items-center space-x-3">
-              <div class="p-3 bg-blue-100 rounded-xl">
-                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="p-3 bg-sky-100 rounded-xl">
+                <svg class="w-6 h-6 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                 </svg>
               </div>
@@ -73,7 +73,7 @@
                 <!-- Full Name -->
                 <div class="md:col-span-2">
                   <label for="full_name" class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                    <span class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-bold px-2 py-1 rounded mr-2">REQUIRED</span>
+                    <span class="bg-gradient-to-r from-sky-600 to-blue-600 text-white text-xs font-bold px-2 py-1 rounded mr-2">REQUIRED</span>
                     Full Name
                   </label>
                   <div class="relative">
@@ -86,7 +86,7 @@
                       v-model="form.full_name"
                       type="text"
                       id="full_name"
-                      class="pl-10 w-full border-2 border-gray-200 rounded-xl shadow-sm p-4 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300"
+                      class="pl-10 w-full border-2 border-gray-200 rounded-xl shadow-sm p-4 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 transition-all duration-300"
                       placeholder="Enter full name"
                       required
                     />
@@ -96,7 +96,7 @@
                 <!-- Email -->
                 <div class="md:col-span-2">
                   <label for="email" class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                    <span class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-bold px-2 py-1 rounded mr-2">REQUIRED</span>
+                    <span class="bg-gradient-to-r from-sky-600 to-blue-600 text-white text-xs font-bold px-2 py-1 rounded mr-2">REQUIRED</span>
                     Email Address
                   </label>
                   <div class="relative">
@@ -109,7 +109,7 @@
                       v-model="form.email"
                       type="email"
                       id="email"
-                      class="pl-10 w-full border-2 border-gray-200 rounded-xl shadow-sm p-4 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300"
+                      class="pl-10 w-full border-2 border-gray-200 rounded-xl shadow-sm p-4 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 transition-all duration-300"
                       placeholder="student@example.com"
                       required
                     />
@@ -119,7 +119,7 @@
                 <!-- Contact Phone -->
                 <div>
                   <label for="contact_phone" class="block text-sm font-semibold text-gray-700 mb-2">
-                    <span class="text-green-600">•</span> Contact Phone
+                    <span class="text-sky-600">•</span> Contact Phone
                   </label>
                   <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -131,7 +131,7 @@
                       v-model="form.contact_phone"
                       type="text"
                       id="contact_phone"
-                      class="pl-10 w-full border-2 border-gray-200 rounded-xl shadow-sm p-4 focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all duration-300"
+                      class="pl-10 w-full border-2 border-gray-200 rounded-xl shadow-sm p-4 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 transition-all duration-300"
                       placeholder="+1 (555) 123-4567"
                     />
                   </div>
@@ -140,7 +140,7 @@
                 <!-- Registration Date -->
                 <div>
                   <label for="registration_date" class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                    <span class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-bold px-2 py-1 rounded mr-2">REQUIRED</span>
+                    <span class="bg-gradient-to-r from-sky-600 to-blue-600 text-white text-xs font-bold px-2 py-1 rounded mr-2">REQUIRED</span>
                     Registration Date
                   </label>
                   <div class="relative">
@@ -153,7 +153,7 @@
                       v-model="form.registration_date"
                       type="date"
                       id="registration_date"
-                      class="pl-10 w-full border-2 border-gray-200 rounded-xl shadow-sm p-4 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300"
+                      class="pl-10 w-full border-2 border-gray-200 rounded-xl shadow-sm p-4 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 transition-all duration-300"
                       required
                     />
                   </div>
@@ -162,7 +162,7 @@
                 <!-- Interested Course -->
                 <div>
                   <label for="interested_course" class="block text-sm font-semibold text-gray-700 mb-2">
-                    <span class="text-purple-600">•</span> Interested Course
+                    <span class="text-sky-600">•</span> Interested Course
                   </label>
                   <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -174,7 +174,7 @@
                       v-model="form.interested_course"
                       type="text"
                       id="interested_course"
-                      class="pl-10 w-full border-2 border-gray-200 rounded-xl shadow-sm p-4 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300"
+                      class="pl-10 w-full border-2 border-gray-200 rounded-xl shadow-sm p-4 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 transition-all duration-300"
                       placeholder="e.g., Web Development, Data Science"
                     />
                   </div>
@@ -183,7 +183,7 @@
                 <!-- Heard About Us -->
                 <div>
                   <label for="heard_about_us" class="block text-sm font-semibold text-gray-700 mb-2">
-                    <span class="text-amber-600">•</span> Heard About Us
+                    <span class="text-sky-600">•</span> Heard About Us
                   </label>
                   <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -194,7 +194,7 @@
                     <select
                       v-model="form.heard_about_us"
                       id="heard_about_us"
-                      class="pl-10 w-full border-2 border-gray-200 rounded-xl shadow-sm p-4 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 transition-all duration-300 appearance-none"
+                      class="pl-10 w-full border-2 border-gray-200 rounded-xl shadow-sm p-4 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 transition-all duration-300 appearance-none"
                     >
                       <option value="" class="text-gray-400">Select an option</option>
                       <option value="friend" class="text-gray-700">Friend</option>
@@ -213,7 +213,7 @@
                 <!-- Location -->
                 <div>
                   <label for="location_id" class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                    <span class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-bold px-2 py-1 rounded mr-2">REQUIRED</span>
+                    <span class="bg-gradient-to-r from-sky-600 to-blue-600 text-white text-xs font-bold px-2 py-1 rounded mr-2">REQUIRED</span>
                     Location
                   </label>
                   <div class="relative">
@@ -226,7 +226,7 @@
                     <select
                       v-model="form.location_id"
                       id="location_id"
-                      class="pl-10 w-full border-2 border-gray-200 rounded-xl shadow-sm p-4 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 appearance-none"
+                      class="pl-10 w-full border-2 border-gray-200 rounded-xl shadow-sm p-4 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 transition-all duration-300 appearance-none"
                       required
                     >
                       <option value="" class="text-gray-400">Select a location</option>
@@ -265,7 +265,7 @@
                   </Link>
                   <button 
                     type="submit" 
-                    class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-10 py-3 rounded-xl shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 font-semibold flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="bg-gradient-to-r from-sky-600 to-blue-600 text-white px-10 py-3 rounded-xl shadow-lg hover:shadow-xl hover:from-sky-700 hover:to-blue-700 transition-all duration-300 font-semibold flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     :disabled="form.processing"
                     :class="{ 'cursor-not-allowed': form.processing }"
                   >

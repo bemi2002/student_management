@@ -9,52 +9,32 @@ use Illuminate\Support\Facades\Auth;
 
 class LocationController extends Controller
 {
-    // Define allowed actions per role
-    private $permissions = [
-        'Admin' => ['view','create','edit','delete'],
-        'Teacher' => ['view','create','edit','delete'],
-    ];
-
-    /**
-     * Check if the logged-in user has permission for the given action
-     */
-    private function checkPermission(string $action): bool
+    // ==================== PERMISSION CHECK ====================
+    private function authorizeAction(string $permission)
     {
         $user = Auth::user();
-        if (!$user) return false;
-
-        foreach ($this->permissions as $role => $allowedActions) {
-            if ($user->hasRole($role)) {
-                return in_array($action, $allowedActions);
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * DRY authorization helper
-     */
-    private function authorizeAction(string $action)
-    {
-        if (!$this->checkPermission($action)) {
+        if (!$user || !$user->can($permission)) {
             abort(403, 'Unauthorized access');
         }
     }
 
+    // ==================== INDEX ====================
     public function index()
     {
-        $this->authorizeAction('view');
+        $this->authorizeAction('view Locations');
+
         $locations = Location::all();
 
         return Inertia::render('Settings/Index', [
-            'locations' => $locations
+            'locations' => $locations,
+            'permissions' => Auth::user()->getAllPermissions()->pluck('name'), // For frontend buttons
         ]);
     }
 
+    // ==================== STORE ====================
     public function store(Request $request)
     {
-        $this->authorizeAction('create');
+        $this->authorizeAction('create Locations');
 
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:locations,name',
@@ -68,9 +48,10 @@ class LocationController extends Controller
         ]);
     }
 
+    // ==================== UPDATE ====================
     public function update(Request $request, Location $location)
     {
-        $this->authorizeAction('edit');
+        $this->authorizeAction('edit Locations');
 
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:locations,name,' . $location->id,
@@ -84,9 +65,10 @@ class LocationController extends Controller
         ]);
     }
 
+    // ==================== DELETE ====================
     public function destroy(Location $location)
     {
-        $this->authorizeAction('delete');
+        $this->authorizeAction('delete Locations');
 
         $location->delete();
 

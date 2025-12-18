@@ -421,7 +421,7 @@ const cancelLocationForm = () => {
   resetLocationForm()
 }
 
-// Role functions - FIXED VERSION
+// Role functions - FIXED VERSION (Admin role now unprotected)
 const editRole = (role) => {
   editingRole.value = role
   roleForm.name = role.name
@@ -464,8 +464,8 @@ const saveRole = async () => {
 }
 
 const deleteRole = async (id, roleName) => {
-  // Prevent deletion of protected roles
-  const protectedRoles = ['admin', 'super-admin', 'Admin', 'Super-Admin'];
+  // MODIFIED: Only protect super-admin, Admin is now unprotected
+  const protectedRoles = ['super-admin', 'Super-Admin']; // Removed 'admin', 'Admin'
   if (protectedRoles.map(r => r.toLowerCase()).includes(roleName.toLowerCase())) {
     showToastMessage('Protected system roles cannot be deleted.')
     return
@@ -501,9 +501,9 @@ const cancelRoleForm = () => {
   resetRoleForm()
 }
 
-// Check if role is protected (for UI disabling)
+// Check if role is protected (for UI disabling) - MODIFIED: Only super-admin is protected
 const isProtectedRole = (roleName) => {
-  const protectedRoles = ['admin', 'super-admin', 'Admin', 'Super-Admin'];
+  const protectedRoles = ['super-admin', 'Super-Admin']; // Removed 'admin', 'Admin'
   return protectedRoles.map(r => r.toLowerCase()).includes(roleName.toLowerCase());
 }
 
@@ -641,7 +641,7 @@ const toggleUserPassword = (user) => {
         :disabled="companyForm.processing"
         v-if="!showCompanyForm"
       >
-        + Add Company
+        + Add Company Location 
       </button>
     </div>
 
@@ -1449,28 +1449,28 @@ const toggleUserPassword = (user) => {
                     </td>
                     <td class="border border-gray-300 px-5 py-3">
                       <div class="flex space-x-2">
+                        <!-- MODIFIED: Admin role is now editable -->
                         <button 
                           @click="editRole(role)" 
                           class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm transition-colors" 
-                          :disabled="roleForm.processing || isProtectedRole(role.name)"
-                          :class="{ 'opacity-50 cursor-not-allowed': isProtectedRole(role.name) }"
+                          :disabled="roleForm.processing"
                         >
-                          {{ isProtectedRole(role.name) ? 'Protected' : 'Edit' }}
+                          Edit
                         </button>
+                        <!-- MODIFIED: Admin role is now deletable -->
                         <button 
                           @click="deleteRole(role.id, role.name)" 
                           class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm transition-colors" 
-                          :disabled="roleForm.processing || isProtectedRole(role.name)"
-                          :class="{ 'opacity-50 cursor-not-allowed': isProtectedRole(role.name) }"
+                          :disabled="roleForm.processing"
                         >
-                          {{ isProtectedRole(role.name) ? 'Protected' : 'Delete' }}
+                          Delete
                         </button>
                       </div>
                     </td>
                   </tr>
                   <tr v-if="roles.length === 0">
                     <td colspan="4" class="border border-gray-300 px-5 py-4 text-center text-gray-500">
-                      No roles found. Click "Add New Role" to create one.
+                      No roles. Click "Add New Role" to create one.
                     </td>
                   </tr>
                 </tbody>

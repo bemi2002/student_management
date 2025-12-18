@@ -1,7 +1,7 @@
 <template>
   <AuthenticatedLayout>
     <template #header>
-      <div class="bg-gradient-to-r from-indigo-600 to-purple-700 -mx-6 -my-2 px-6 py-4">
+      <div class="bg-gradient-to-r from-sky-600 to-blue-500 -mx-6 -my-2 px-6 py-4">
         <h2 class="font-bold text-xl text-white leading-tight">Students Management</h2>
       </div>
     </template>
@@ -21,7 +21,7 @@
         <Link
           v-if="canCreate"
           :href="route('students.create')"
-          class="group inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 transform hover:-translate-y-0.5"
+          class="group inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all duration-200 transform hover:-translate-y-0.5"
         >
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
@@ -34,32 +34,32 @@
       <div class="space-y-3 mb-6">
         <div
           v-if="$page.props.flash?.success"
-          class="rounded-lg p-4 bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 shadow-sm"
+          class="rounded-lg p-4 bg-gradient-to-r from-sky-50 to-blue-50 border border-sky-200 shadow-sm"
         >
           <div class="flex items-center">
             <div class="flex-shrink-0">
-              <svg class="h-5 w-5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+              <svg class="h-5 w-5 text-sky-600" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
               </svg>
             </div>
             <div class="ml-3">
-              <p class="text-sm font-medium text-emerald-800">{{ $page.props.flash.success }}</p>
+              <p class="text-sm font-medium text-sky-800">{{ $page.props.flash.success }}</p>
             </div>
           </div>
         </div>
 
         <div
           v-if="$page.props.flash?.error"
-          class="rounded-lg p-4 bg-gradient-to-r from-red-50 to-rose-50 border border-red-200 shadow-sm"
+          class="rounded-lg p-4 bg-gradient-to-r from-rose-50 to-red-50 border border-rose-200 shadow-sm"
         >
           <div class="flex items-center">
             <div class="flex-shrink-0">
-              <svg class="h-5 w-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+              <svg class="h-5 w-5 text-rose-600" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
               </svg>
             </div>
             <div class="ml-3">
-              <p class="text-sm font-medium text-red-800">{{ $page.props.flash.error }}</p>
+              <p class="text-sm font-medium text-rose-800">{{ $page.props.flash.error }}</p>
             </div>
           </div>
         </div>
@@ -117,13 +117,13 @@
               <tr
                 v-for="(student, index) in students"
                 :key="student.id"
-                class="hover:bg-gradient-to-r hover:from-indigo-50/30 hover:to-purple-50/30 transition-all duration-200"
+                class="hover:bg-gradient-to-r hover:from-sky-50/30 hover:to-blue-50/30 transition-all duration-200"
                 :class="index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'"
               >
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="flex items-center">
-                    <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center mr-3">
-                      <span class="text-sm font-semibold text-indigo-700">
+                    <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gradient-to-br from-sky-100 to-blue-100 flex items-center justify-center mr-3">
+                      <span class="text-sm font-semibold text-sky-700">
                         {{ getInitials(student.full_name) }}
                       </span>
                     </div>
@@ -147,14 +147,14 @@
                   </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <span v-if="student.interested_course" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800">
+                  <span v-if="student.interested_course" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-sky-100 to-blue-100 text-sky-800">
                     {{ student.interested_course }}
                   </span>
                   <span v-else class="text-gray-400 italic">—</span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div v-if="student.heard_about_us" class="flex items-center">
-                    <div :class="getHeardAboutUsIcon(student.heard_about_us)" class="mr-2"></div>
+                    <div v-html="getHeardAboutUsIcon(student.heard_about_us)" class="mr-2"></div>
                     <span class="text-sm text-gray-700 capitalize">
                       {{ formatHeardAboutUs(student.heard_about_us) }}
                     </span>
@@ -170,7 +170,7 @@
                   </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <span v-if="student.location?.name" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-green-100 to-emerald-100 text-emerald-800">
+                  <span v-if="student.location?.name" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-sky-100 to-blue-100 text-sky-800">
                     {{ student.location.name }}
                   </span>
                   <span v-else class="text-gray-400 italic">—</span>
@@ -191,7 +191,7 @@
                     <Link
                       v-if="canEdit"
                       :href="route('students.edit', student.id)"
-                      class="group inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
+                      class="group inline-flex items-center text-sm font-medium text-sky-600 hover:text-sky-800 transition-colors"
                     >
                       <svg class="w-4 h-4 mr-1 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
@@ -202,7 +202,7 @@
                     <button
                       v-if="canDelete"
                       @click="deleteStudent(student)"
-                      class="group inline-flex items-center text-sm font-medium text-red-600 hover:text-red-800 transition-colors"
+                      class="group inline-flex items-center text-sm font-medium text-rose-600 hover:text-rose-800 transition-colors"
                     >
                       <svg class="w-4 h-4 mr-1 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -221,9 +221,9 @@
       <div v-if="students.length === 0" class="text-center py-16 px-4">
         <div class="max-w-md mx-auto">
           <div class="relative w-24 h-24 mx-auto mb-6">
-            <div class="absolute inset-0 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-full"></div>
-            <div class="absolute inset-4 bg-gradient-to-r from-indigo-200 to-purple-200 rounded-full flex items-center justify-center">
-              <svg class="w-12 h-12 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="absolute inset-0 bg-gradient-to-r from-sky-100 to-blue-100 rounded-full"></div>
+            <div class="absolute inset-4 bg-gradient-to-r from-sky-200 to-blue-200 rounded-full flex items-center justify-center">
+              <svg class="w-12 h-12 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
               </svg>
             </div>
@@ -235,7 +235,7 @@
           <Link
             v-if="canCreate"
             :href="route('students.create')"
-            class="group inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow-lg"
+            class="group inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow-lg"
           >
             <svg class="w-5 h-5 mr-2 group-hover:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
@@ -298,10 +298,10 @@ const getInitials = (fullName) => {
 // Get icon for "heard_about_us"
 const getHeardAboutUsIcon = (value) => {
   const icons = {
-    'friend': 'w-4 h-4 text-purple-500',
-    'social_media': 'w-4 h-4 text-blue-500',
-    'website': 'w-4 h-4 text-green-500',
-    'advertisement': 'w-4 h-4 text-yellow-500',
+    'friend': 'w-4 h-4 text-sky-500',
+    'social_media': 'w-4 h-4 text-sky-500',
+    'website': 'w-4 h-4 text-sky-500',
+    'advertisement': 'w-4 h-4 text-sky-500',
     'other': 'w-4 h-4 text-gray-500'
   };
   

@@ -10,11 +10,17 @@ use App\Models\CompanyAddress;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Illuminate\Support\Facades\Auth;
 
 class SettingsController extends Controller
 {
     public function index()
     {
+        // Restrict access to admin users only
+        if (!Auth::check() || !Auth::user()->hasRole('Admin')) {
+            abort(403, 'Unauthorized access. Admin access required.');
+        }
+
         return Inertia::render('Settings/Index', [
             'companies' => CompanyAddress::all(),
             'courses' => Course::all(),
@@ -28,10 +34,10 @@ class SettingsController extends Controller
                     'email' => $user->email,
                     'plain_password' => $user->plain_password,
                     'showPassword' => false,
-                    'roles' => $user->roles // Add this line to include user roles
+                    'roles' => $user->roles
                 ];
             }),
-            'permissions' => Permission::all() // Add this line to pass permissions
+            'permissions' => Permission::all()
         ]);
     }
 }

@@ -12,7 +12,7 @@ class PermissionController extends Controller
     // Define allowed actions per role
     private $permissions = [
         'Admin'       => ['view', 'create', 'edit', 'delete'],
-        'Super-Admin' => ['view', 'create', 'edit', 'delete'], // optional
+        
         
     ];
 

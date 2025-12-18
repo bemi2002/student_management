@@ -1,20 +1,31 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import { Head, Link, router } from '@inertiajs/vue3'
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 
 const props = defineProps({
   permissions: Array
 })
 
+const permissionList = ref([...props.permissions])
+
 // Delete permission
 const deletePermission = (id) => {
-  if (confirm('Are you sure you want to delete this permission?')) {
-    router.delete(`/permissions/${id}`)
-  }
+  if (!confirm('Are you sure you want to delete this permission?')) return
+
+  router.delete(`/permissions/${id}`, {
+    onSuccess: () => {
+      // Remove deleted permission from the local list
+      permissionList.value = permissionList.value.filter(p => p.id !== id)
+      alert('Permission deleted successfully!')
+    },
+    onError: (errors) => {
+      console.error(errors)
+      alert('Failed to delete permission.')
+    }
+  })
 }
 
-const permissionList = computed(() => props.permissions)
 </script>
 
 <template>
@@ -73,6 +84,11 @@ const permissionList = computed(() => props.permissions)
                   >
                     Delete
                   </button>
+                </td>
+              </tr>
+              <tr v-if="permissionList.length === 0">
+                <td colspan="4" class="text-center py-4 text-gray-500">
+                  No permissions found.
                 </td>
               </tr>
             </tbody>

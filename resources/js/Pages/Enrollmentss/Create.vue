@@ -2,11 +2,11 @@
   <AuthenticatedLayout>
     <template #header>
       <div class="flex justify-between items-center">
-        <h2 class="font-bold text-2xl text-gradient bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+        <h2 class="font-bold text-2xl text-gradient bg-clip-text text-transparent bg-gradient-to-r from-sky-600 to-blue-600">
           Create New Enrollment
         </h2>
         <div class="flex items-center space-x-2">
-          <div class="px-3 py-1 bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 rounded-full text-sm font-medium">
+          <div class="px-3 py-1 bg-gradient-to-r from-sky-100 to-blue-100 text-sky-700 rounded-full text-sm font-medium">
             New Entry
           </div>
         </div>
@@ -23,7 +23,7 @@
 
         <Link
           :href="route('enrollmentss.index')"
-          class="group inline-flex items-center px-5 py-3 border-2 border-gray-300 hover:border-indigo-500 text-gray-700 hover:text-indigo-700 font-medium rounded-xl hover:bg-indigo-50 transition-all duration-300"
+          class="group inline-flex items-center px-5 py-3 border-2 border-gray-300 hover:border-sky-500 text-gray-700 hover:text-sky-700 font-medium rounded-xl hover:bg-sky-50 transition-all duration-300"
         >
           <svg class="w-4 h-4 mr-2 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
@@ -35,10 +35,10 @@
       <!-- Form Container -->
       <div class="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
         <!-- Form Header -->
-        <div class="px-8 py-6 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-gray-200">
+        <div class="px-8 py-6 bg-gradient-to-r from-sky-50 to-blue-50 border-b border-gray-200">
           <div class="flex items-center">
             <div class="p-3 bg-white rounded-xl shadow-sm mr-4">
-              <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-6 h-6 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
               </svg>
             </div>
@@ -70,7 +70,7 @@
                 v-model="form.title"
                 type="text"
                 placeholder="Enter enrollment title"
-                class="pl-10 pr-4 py-3 w-full border-2 border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 rounded-xl bg-white shadow-sm transition-all outline-none"
+                class="pl-10 pr-4 py-3 w-full border-2 border-gray-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 rounded-xl bg-white shadow-sm transition-all outline-none"
               />
             </div>
             <p v-if="form.errors.title" class="mt-2 text-sm text-red-600 font-medium flex items-center">
@@ -97,7 +97,7 @@
                 v-model="form.description"
                 placeholder="Enter a brief description about this enrollment"
                 rows="4"
-                class="pl-10 pr-4 py-3 w-full border-2 border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 rounded-xl bg-white shadow-sm transition-all outline-none"
+                class="pl-10 pr-4 py-3 w-full border-2 border-gray-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 rounded-xl bg-white shadow-sm transition-all outline-none"
               ></textarea>
             </div>
             <p v-if="form.errors.description" class="mt-2 text-sm text-red-600 font-medium flex items-center">
@@ -122,7 +122,7 @@
               <select
                 id="course"
                 v-model.number="form.course_id"
-                class="pl-10 pr-4 py-3 w-full border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl bg-white shadow-sm transition-all outline-none appearance-none"
+                class="pl-10 pr-4 py-3 w-full border-2 border-gray-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 rounded-xl bg-white shadow-sm transition-all outline-none appearance-none"
               >
                 <option value="">Select Course</option>
                 <option
@@ -162,7 +162,7 @@
               <select
                 id="course_type"
                 v-model.number="form.course_type_id"
-                class="pl-10 pr-4 py-3 w-full border-2 border-gray-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 rounded-xl bg-white shadow-sm transition-all outline-none appearance-none"
+                class="pl-10 pr-4 py-3 w-full border-2 border-gray-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 rounded-xl bg-white shadow-sm transition-all outline-none appearance-none"
               >
                 <option value="">Select Course Type</option>
                 <option v-for="ct in courseTypes" :key="ct.id" :value="ct.id" class="text-gray-700">
@@ -198,7 +198,7 @@
               <select
                 id="company_address"
                 v-model.number="form.company_address_id"
-                class="pl-10 pr-4 py-3 w-full border-2 border-gray-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 rounded-xl bg-white shadow-sm transition-all outline-none appearance-none"
+                class="pl-10 pr-4 py-3 w-full border-2 border-gray-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 rounded-xl bg-white shadow-sm transition-all outline-none appearance-none"
               >
                 <option value="">Select Company Address</option>
                 <option v-for="ca in companyAddresses" :key="ca.id" :value="ca.id" class="text-gray-700">
@@ -263,7 +263,7 @@
                 type="number"
                 min="0"
                 placeholder="Student Capacity"
-                class="pl-10 pr-4 py-3 w-full border-2 border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 rounded-xl bg-white shadow-sm transition-all outline-none"
+                class="pl-10 pr-4 py-3 w-full border-2 border-gray-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 rounded-xl bg-white shadow-sm transition-all outline-none"
               />
             </div>
             <p v-if="form.errors.student_capacity" class="mt-2 text-sm text-red-600 font-medium flex items-center">
@@ -292,7 +292,7 @@
                 min="0"
                 step="0.01"
                 placeholder="Amount"
-                class="pl-10 pr-4 py-3 w-full border-2 border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 rounded-xl bg-white shadow-sm transition-all outline-none"
+                class="pl-10 pr-4 py-3 w-full border-2 border-gray-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 rounded-xl bg-white shadow-sm transition-all outline-none"
               />
               <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                 <span class="text-gray-500">$</span>
@@ -320,7 +320,7 @@
               <select
                 id="completion_status"
                 v-model="form.completion_status"
-                class="pl-10 pr-4 py-3 w-full border-2 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-xl bg-white shadow-sm transition-all outline-none appearance-none"
+                class="pl-10 pr-4 py-3 w-full border-2 border-gray-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 rounded-xl bg-white shadow-sm transition-all outline-none appearance-none"
               >
                 <option v-for="status in statusOptions" :key="status" :value="status" class="text-gray-700">
                   {{ status }}
@@ -356,7 +356,7 @@
                 v-model="form.telegram_link"
                 type="text"
                 placeholder="Telegram Link"
-                class="pl-10 pr-4 py-3 w-full border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl bg-white shadow-sm transition-all outline-none"
+                class="pl-10 pr-4 py-3 w-full border-2 border-gray-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 rounded-xl bg-white shadow-sm transition-all outline-none"
               />
             </div>
             <p v-if="form.errors.telegram_link" class="mt-2 text-sm text-red-600 font-medium flex items-center">
@@ -382,7 +382,7 @@
                 id="enrollment_date"
                 v-model="form.enrollment_date"
                 type="date"
-                class="pl-10 pr-4 py-3 w-full border-2 border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 rounded-xl bg-white shadow-sm transition-all outline-none"
+                class="pl-10 pr-4 py-3 w-full border-2 border-gray-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 rounded-xl bg-white shadow-sm transition-all outline-none"
               />
             </div>
             <p v-if="form.errors.enrollment_date" class="mt-2 text-sm text-red-600 font-medium flex items-center">
@@ -398,7 +398,7 @@
             <button
               type="submit"
               :disabled="form.processing"
-              class="group w-full md:w-auto px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none disabled:hover:shadow-lg flex items-center justify-center"
+              class="group w-full md:w-auto px-8 py-4 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none disabled:hover:shadow-lg flex items-center justify-center"
             >
               <svg v-if="form.processing" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
@@ -418,6 +418,7 @@
 
 <script setup>
 import { useForm, router } from '@inertiajs/vue3'
+import { Link } from '@inertiajs/vue3'  // Add this import
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 
 const props = defineProps({
@@ -444,7 +445,9 @@ const form = useForm({
 
 function submit() {
   form.post(route('enrollmentss.store'), {
-    onSuccess: () => router.visit(route('enrollmentss.index')),
+    onSuccess: () => {
+      router.visit(route('enrollmentss.index'))
+    },
   })
 }
 </script>

@@ -9,55 +9,32 @@ use Illuminate\Support\Facades\Auth;
 
 class CourseController extends Controller
 {
-    // Define allowed actions per role
-    private $permissions = [
-        'Admin'       => ['view','create','edit','delete'],
-        'Teacher'     => ['view','create','edit','delete'],
-    ];
-
-    /**
-     * Check if the logged-in user has permission for the given action
-     */
-    private function checkPermission(string $action): bool
+    // ==================== PERMISSION CHECK ====================
+    private function authorizeAction(string $permission)
     {
         $user = Auth::user();
-        if (!$user) return false;
-
-        // Loop through roles and check if user has the role
-        foreach ($this->permissions as $role => $allowedActions) {
-            if ($user->hasRole($role)) {
-                return in_array($action, $allowedActions);
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * DRY authorization helper
-     */
-    private function authorizeAction(string $action)
-    {
-        if (!$this->checkPermission($action)) {
+        if (!$user || !$user->can($permission)) {
             abort(403, 'Unauthorized access');
         }
     }
 
+    // ==================== INDEX ====================
     public function index()
     {
-        $this->authorizeAction('view');
+        $this->authorizeAction('view Courses');
 
         $courses = Course::all();
 
-        return Inertia::render('Settings/Index', [
-            'courses' => $courses
+        return Inertia::render('Courses/Index', [
+            'courses' => $courses,
+            'permissions' => Auth::user()->getAllPermissions()->pluck('name'), // For frontend buttons
         ]);
     }
 
-    // Store new course
+    // ==================== STORE ====================
     public function store(Request $request)
     {
-        $this->authorizeAction('create');
+        $this->authorizeAction('create Courses');
 
         $validated = $request->validate([
             'course_name'    => 'required|string|max:255',
@@ -76,10 +53,10 @@ class CourseController extends Controller
         ]);
     }
 
-    // Update course
+    // ==================== UPDATE ====================
     public function update(Request $request, Course $course)
     {
-        $this->authorizeAction('edit');
+        $this->authorizeAction('edit Courses');
 
         $validated = $request->validate([
             'course_name'    => 'required|string|max:255',
@@ -98,10 +75,10 @@ class CourseController extends Controller
         ]);
     }
 
-    // Delete course
+    // ==================== DELETE ====================
     public function destroy(Course $course)
     {
-        $this->authorizeAction('delete');
+        $this->authorizeAction('delete Courses');
 
         $course->delete();
 

@@ -4,50 +4,49 @@ namespace App\Http\Controllers;
 
 use App\Models\Student;
 use App\Models\Location;
-use App\Models\EnrollmentDropout; // Import the dropout model
+use App\Models\EnrollmentDropout;
+use App\Models\Enrollmentss;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 
 class StudentController extends Controller
 {
-    private $permissions = [
-        'Super-Admin' => ['view','create','edit','delete','assign','unassign'],
-        'Admin'       => ['view','create','edit','delete','assign','unassign'],
-    ];
-
-    private function checkPermission(string $action): bool
+    // ==================== PERMISSION CHECK ====================
+    private function authorizeAction(string $permission)
     {
         $user = Auth::user();
-        foreach ($this->permissions as $role => $allowedActions) {
-            if ($user->hasRole($role)) return in_array($action, $allowedActions);
+        if (!$user->can($permission)) {
+            abort(403, 'Unauthorized access');
         }
-        return false;
     }
 
-    private function authorizeAction(string $action)
-    {
-        if (!$this->checkPermission($action)) abort(403, 'Unauthorized access');
-    }
-
+    // ==================== INDEX ====================
     public function index()
     {
-        $this->authorizeAction('view');
+        $this->authorizeAction('view Students');
+
         $students = Student::with('location')->get();
-        return Inertia::render('Students/Index', ['students' => $students]);
+
+        return Inertia::render('Students/Index', [
+            'students' => $students,
+            'permissions' => Auth::user()->getAllPermissions()->pluck('name'), // For frontend
+        ]);
     }
 
+    // ==================== CREATE ====================
     public function create()
     {
-        $this->authorizeAction('create');
+        $this->authorizeAction('create Students');
 
         $locations = Location::all();
         return Inertia::render('Students/Create', ['locations' => $locations]);
     }
 
+    // ==================== STORE ====================
     public function store(Request $request)
     {
-        $this->authorizeAction('create');
+        $this->authorizeAction('create Students');
 
         $validated = $request->validate([
             'full_name' => 'required|string|max:255',
@@ -62,12 +61,14 @@ class StudentController extends Controller
 
         Student::create($validated);
 
-        return redirect()->route('students.index')->with('success', 'Student created successfully.');
+        return redirect()->route('students.index')
+            ->with('success', 'Student created successfully.');
     }
 
+    // ==================== EDIT ====================
     public function edit(Student $student)
     {
-        $this->authorizeAction('edit');
+        $this->authorizeAction('edit Students');
 
         $locations = Location::all();
         return Inertia::render('Students/Edit', [
@@ -76,9 +77,10 @@ class StudentController extends Controller
         ]);
     }
 
+    // ==================== UPDATE ====================
     public function update(Request $request, Student $student)
     {
-        $this->authorizeAction('edit');
+        $this->authorizeAction('edit Students');
 
         $validated = $request->validate([
             'full_name' => 'required|string|max:255',
@@ -93,36 +95,43 @@ class StudentController extends Controller
 
         $student->update($validated);
 
-        return redirect()->route('students.index')->with('success', 'Student updated successfully.');
+        return redirect()->route('students.index')
+            ->with('success', 'Student updated successfully.');
     }
 
+    // ==================== DELETE ====================
     public function destroy(Student $student)
     {
-        $this->authorizeAction('delete');
+        $this->authorizeAction('delete Students');
+
         $student->delete();
 
-        return redirect()->route('students.index')->with('success', 'Student deleted successfully.');
+        return redirect()->route('students.index')
+            ->with('success', 'Student deleted successfully.');
     }
 
+    // ==================== SHOW ====================
     public function show(Student $student)
     {
-        $this->authorizeAction('view');
+        $this->authorizeAction('view Students');
 
         $student->load([
             'enrollments.course',
             'rejectedEnrollments.enrollment.course',
             'location',
-            'dropoutHistory.enrollment.course' // Load dropout history with enrollment and course
+            'dropoutHistory.enrollment.course'
         ]);
 
         return Inertia::render('Students/Show', [
             'student' => $student,
             'enrollments' => $student->enrollments,
             'rejectedEnrollments' => $student->rejectedEnrollments,
-            'dropout_history' => $student->dropoutHistory, // Pass dropout history to frontend
+            'dropout_history' => $student->dropoutHistory,
+            'permissions' => Auth::user()->getAllPermissions()->pluck('name'),
         ]);
     }
 
+    // ==================== ASSIGN TO ENROLLMENT ====================
     public function assignToEnrollment(Request $request, Student $student)
     {
         $this->authorizeAction('assign');
@@ -136,19 +145,18 @@ class StudentController extends Controller
         return back()->with('success', 'Student assigned successfully.');
     }
 
+    // ==================== UNASSIGN FROM ENROLLMENT ====================
     public function unassignFromEnrollment(Request $request, Student $student)
     {
         $this->authorizeAction('unassign');
 
         $validated = $request->validate([
             'enrollment_id' => 'required|exists:enrollmentss,id',
-            'reason' => 'required|string|max:500', // Add reason for dropout
+            'reason' => 'required|string|max:500',
         ]);
 
-        // Remove from enrollments
         $student->enrollments()->detach($validated['enrollment_id']);
 
-        // Create dropout record
         EnrollmentDropout::create([
             'student_id' => $student->id,
             'enrollment_id' => $validated['enrollment_id'],
@@ -158,15 +166,14 @@ class StudentController extends Controller
         return back()->with('success', 'Student unassigned and dropout recorded successfully.');
     }
 
-    // New method to get available enrollments for assignment
+    // ==================== GET AVAILABLE ENROLLMENTS ====================
     public function getAvailableEnrollments(Student $student)
     {
         $this->authorizeAction('assign');
 
-        // Get enrollments that the student is not currently enrolled in
         $currentEnrollmentIds = $student->enrollments()->pluck('enrollmentss.id');
-        
-        $availableEnrollments = \App\Models\Enrollmentss::with('course')
+
+        $availableEnrollments = Enrollmentss::with('course')
             ->whereNotIn('id', $currentEnrollmentIds)
             ->get();
 

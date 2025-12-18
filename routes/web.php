@@ -200,6 +200,37 @@ Route::resource('calendar-events', CalendarEventController::class);
 
 
 
+// Protect all student routes with permissions
+Route::prefix('students')->name('students.')->group(function () {
+    Route::middleware(['auth', 'permission:view students'])->group(function () {
+        Route::get('/', [StudentController::class, 'index'])->name('index');
+        Route::get('/{student}', [StudentController::class, 'show'])->name('show');
+    });
+    
+    Route::middleware(['auth', 'permission:create students'])->group(function () {
+        Route::get('/create', [StudentController::class, 'create'])->name('create');
+        Route::post('/', [StudentController::class, 'store'])->name('store');
+    });
+    
+    Route::middleware(['auth', 'permission:edit students'])->group(function () {
+        Route::get('/{student}/edit', [StudentController::class, 'edit'])->name('edit');
+        Route::put('/{student}', [StudentController::class, 'update'])->name('update');
+    });
+    
+    Route::middleware(['auth', 'permission:delete students'])->group(function () {
+        Route::delete('/{student}', [StudentController::class, 'destroy'])->name('destroy');
+    });
+    
+    Route::middleware(['auth', 'permission:assign students'])->group(function () {
+        Route::post('/{student}/assign', [StudentController::class, 'assignToEnrollment'])->name('assign');
+        Route::get('/{student}/enrollments', [StudentController::class, 'getAvailableEnrollments'])->name('enrollments.available');
+    });
+    
+    Route::middleware(['auth', 'permission:unassign students'])->group(function () {
+        Route::post('/{student}/unassign', [StudentController::class, 'unassignFromEnrollment'])->name('unassign');
+    });
+});
+
     // Student enrollment actions
     Route::post('/students/{student}/assign-enrollment', [StudentController::class, 'assignToEnrollment'])
         ->name('students.assign-enrollment');

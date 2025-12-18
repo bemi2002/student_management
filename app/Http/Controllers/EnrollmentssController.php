@@ -4,45 +4,30 @@ namespace App\Http\Controllers;
 
 use App\Models\Enrollmentss;
 use App\Models\Student;
-use App\Models\RejectedEnrollment;
+use App\Models\EnrollmentDropout;
 use App\Models\Course;
 use App\Models\CourseType;
 use App\Models\CompanyAddress;
-
-use App\Models\EnrollmentDropout;
-
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
 
 class EnrollmentssController extends Controller
 {
-    private $permissions = [
-        'Super-Admin' => ['view','create','edit','delete','assign','unassign'],
-        'Admin'       => ['view','create','edit','delete','assign','unassign'],
-    ];
-
-    private function checkPermission(string $action): bool
+    // ==================== PERMISSION CHECK ====================
+    private function authorizeAction(string $permission)
     {
         $user = Auth::user();
-        foreach ($this->permissions as $role => $allowedActions) {
-            if ($user->hasRole($role)) return in_array($action, $allowedActions);
+        if (!$user->can($permission)) {
+            abort(403, 'Unauthorized access');
         }
-        return false;
-    }
-
-    private function authorizeAction(string $action)
-    {
-        if (!$this->checkPermission($action)) abort(403, 'Unauthorized access');
     }
 
     // ==================== INDEX ====================
     public function index()
     {
-        $this->authorizeAction('view');
+        $this->authorizeAction('view Enrollments');
 
         $enrollments = Enrollmentss::with(['course', 'courseType', 'companyAddress'])->get();
 
@@ -50,44 +35,39 @@ class EnrollmentssController extends Controller
             'enrollments' => $enrollments,
             'courses' => Course::select('id', 'course_name')->get(),
             'courseTypes' => CourseType::select('id', 'course_type')->get(),
-            'companyAddresses' => CompanyAddress::select('id','city')->get(),
+            'companyAddresses' => CompanyAddress::select('id', 'city')->get(),
         ]);
     }
 
     // ==================== SHOW ====================
-    public function show($id, Request $request)
-{
-    $this->authorizeAction('view');
+    public function show($id)
+    {
+        $this->authorizeAction('view Enrollments');
 
-    // Load enrollment and related details
-    $enrollment = Enrollmentss::with([
-        'course', 
-        'courseType', 
-        'companyAddress',
-        'students' => function ($query) {
-            $query->select('students.id', 'full_name', 'email', 'contact_phone');
-        }
-    ])->findOrFail($id);
+        $enrollment = Enrollmentss::with([
+            'course',
+            'courseType',
+            'companyAddress',
+            'students' => function ($query) {
+                $query->select('students.id', 'full_name', 'email', 'contact_phone');
+            }
+        ])->findOrFail($id);
 
-    // ---- FIX: Separate assigned students properly ----
-    $assignedStudents = $enrollment->students;
+        $assignedStudents = $enrollment->students;
+        $dropoutHistory = $this->getDropoutHistory($id);
 
-    // ---- FIX: Load dropout history ----
-    $dropoutHistory = $this->getDropoutHistory($id);
-
-    return Inertia::render('Enrollmentss/Show', [
-        'enrollment' => $enrollment,
-        'assignedStudents' => $assignedStudents,   // <--- ADDED
-        'dropoutHistory' => $dropoutHistory,       // <--- already correct
-        'availableStudentsUrl' => route('enrollmentss.available-students', $enrollment),
-    ]);
-}
-
+        return Inertia::render('Enrollmentss/Show', [
+            'enrollment' => $enrollment,
+            'assignedStudents' => $assignedStudents,
+            'dropoutHistory' => $dropoutHistory,
+            'availableStudentsUrl' => route('enrollmentss.available-students', $enrollment),
+        ]);
+    }
 
     // ==================== CREATE ====================
     public function create()
     {
-        $this->authorizeAction('create');
+        $this->authorizeAction('create Enrollments');
 
         return Inertia::render('Enrollmentss/Create', [
             'courses' => Course::select('id', 'course_name')->get(),
@@ -99,7 +79,7 @@ class EnrollmentssController extends Controller
     // ==================== STORE ====================
     public function store(Request $request)
     {
-        $this->authorizeAction('create');
+        $this->authorizeAction('create Enrollments');
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -113,7 +93,6 @@ class EnrollmentssController extends Controller
             'telegram_link' => 'nullable|string|max:255',
             'enrollment_date' => 'nullable|date',
             'organization' => 'nullable|string|max:255',
-
         ]);
 
         Enrollmentss::create($validated);
@@ -125,7 +104,7 @@ class EnrollmentssController extends Controller
     // ==================== EDIT ====================
     public function edit(Enrollmentss $enrollmentss)
     {
-        $this->authorizeAction('edit');
+        $this->authorizeAction('edit Enrollments');
 
         return Inertia::render('Enrollmentss/Edit', [
             'enrollmentss' => $enrollmentss,
@@ -134,11 +113,11 @@ class EnrollmentssController extends Controller
             'companyAddresses' => CompanyAddress::select('id', 'city')->get(),
         ]);
     }
-    
+
     // ==================== UPDATE ====================
     public function update(Request $request, Enrollmentss $enrollmentss)
     {
-        $this->authorizeAction('edit');
+        $this->authorizeAction('edit Enrollments');
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -152,7 +131,6 @@ class EnrollmentssController extends Controller
             'telegram_link' => 'nullable|string|max:255',
             'enrollment_date' => 'nullable|date',
             'organization' => 'nullable|string|max:255',
-
         ]);
 
         $enrollmentss->update($validated);
@@ -163,218 +141,122 @@ class EnrollmentssController extends Controller
 
     // ==================== DELETE ====================
     public function destroy(Enrollmentss $enrollmentss)
-{
-    $this->authorizeAction('delete');
+    {
+        $this->authorizeAction('delete Enrollments');
 
-    // Detach related students first
-    if ($enrollmentss->students()->count() > 0) {
-        $enrollmentss->students()->detach();
+        if ($enrollmentss->students()->count() > 0) {
+            $enrollmentss->students()->detach();
+        }
+
+        $enrollmentss->delete();
+
+        return redirect()->route('enrollmentss.index')
+            ->with('success', 'Enrollment deleted successfully');
     }
 
-    $enrollmentss->delete();
-
-    return redirect()->route('enrollmentss.index')
-        ->with('success', 'Enrollment deleted successfully');
-}
     // ==================== AVAILABLE STUDENTS ====================
     public function availableStudents(Enrollmentss $enrollmentss)
     {
-        try {
-            $students = Student::whereDoesntHave('enrollmentss', function($query) use ($enrollmentss) {
-                    $query->where('enrollmentss_id', $enrollmentss->id);
-                })
-                ->select('id', 'full_name', 'email', 'contact_phone')
-                ->get();
+        $this->authorizeAction('view Enrollments'); // Added authorization
 
-            $assignedCount = $enrollmentss->students()->count();
+        $students = Student::whereDoesntHave('enrollmentss', function($query) use ($enrollmentss) {
+                $query->where('enrollmentss_id', $enrollmentss->id);
+            })
+            ->select('id', 'full_name', 'email', 'contact_phone')
+            ->get();
 
-            return response()->json([
-                'success' => true,
-                'data' => $students,
-                'assigned_count' => $assignedCount,
-            ]);
+        $assignedCount = $enrollmentss->students()->count();
 
-        } catch (\Exception $e) {
-            Log::error('Error fetching available students: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to load available students',
-                'data' => []
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'data' => $students,
+            'assigned_count' => $assignedCount,
+        ]);
     }
 
     // ==================== ASSIGN STUDENT ====================
     public function assignStudent(Request $request, $enrollmentId)
     {
-        try {
-            $this->authorizeAction('assign');
+        $this->authorizeAction('assign Student'); // Fixed: uppercase 'S' in 'Student'
 
-            $enrollment = Enrollmentss::findOrFail($enrollmentId);
+        $enrollment = Enrollmentss::findOrFail($enrollmentId);
 
-            $validated = $request->validate([
-                'student_id' => 'required|exists:students,id',
-            ]);
+        $validated = $request->validate([
+            'student_id' => 'required|exists:students,id',
+        ]);
 
-            // Check if student is already assigned
-            $alreadyAssigned = $enrollment->students()
-                ->where('student_id', $validated['student_id'])
-                ->exists();
-
-            if ($alreadyAssigned) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Student is already assigned to this enrollment.'
-                ], 422);
-            }
-
-            // Check capacity
-            if ($enrollment->student_capacity && $enrollment->students()->count() >= $enrollment->student_capacity) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Cannot assign student: enrollment capacity reached.'
-                ], 422);
-            }
-
-            // Use attach to assign the student
-            $enrollment->students()->attach($validated['student_id']);
-
-            // Load the assigned student data for frontend
-            $student = Student::select('id', 'full_name', 'email', 'contact_phone')
-                ->find($validated['student_id']);
-
-            if (!$student) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Student not found after assignment.'
-                ], 500);
-            }
-
-            // Remove from rejected enrollments if exists
-            $this->removeFromRejectedEnrollments($validated['student_id'], $enrollment->id);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Student assigned successfully',
-                'student' => $student
-            ]);
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation error',
-                'errors' => $e->errors()
-            ], 422);
-        } catch (\Exception $e) {
-            Log::error('Error assigning student to enrollment ' . $enrollmentId . ': ' . $e->getMessage());
-            
-            return response()->json([
-                'success' => false,
-                'message' => 'Server error while assigning student: ' . $e->getMessage()
-            ], 500);
+        if ($enrollment->students()->where('student_id', $validated['student_id'])->exists()) {
+            return response()->json(['success' => false, 'message' => 'Student already assigned'], 422);
         }
+
+        if ($enrollment->student_capacity && $enrollment->students()->count() >= $enrollment->student_capacity) {
+            return response()->json(['success' => false, 'message' => 'Enrollment capacity reached'], 422);
+        }
+
+        $enrollment->students()->attach($validated['student_id']);
+        $this->removeFromRejectedEnrollments($validated['student_id'], $enrollment->id);
+
+        $student = Student::select('id', 'full_name', 'email', 'contact_phone')->find($validated['student_id']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Student assigned successfully',
+            'student' => $student
+        ]);
     }
 
     // ==================== UNASSIGN STUDENT ====================
     public function unassignStudent(Request $request, $enrollmentId)
     {
-        try {
-            $this->authorizeAction('unassign');
+        $this->authorizeAction('unassign Student'); // Fixed: uppercase 'S' in 'Student'
 
-            $enrollment = Enrollmentss::findOrFail($enrollmentId);
+        $enrollment = Enrollmentss::findOrFail($enrollmentId);
 
-            $validated = $request->validate([
-                'student_id' => 'required|exists:students,id',
-                'reason' => 'required|string|max:500',
-            ]);
+        $validated = $request->validate([
+            'student_id' => 'required|exists:students,id',
+            'reason' => 'required|string|max:500',
+        ]);
 
-            // Check if student is actually assigned
-            $isAssigned = $enrollment->students()
-                ->where('student_id', $validated['student_id'])
-                ->exists();
-
-            if (!$isAssigned) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Student is not assigned to this enrollment.'
-                ], 422);
-            }
-
-            // Detach the student
-            $enrollment->students()->detach($validated['student_id']);
-
-            // Create dropout history record if table exists and has correct structure
-            $this->createRejectedEnrollmentRecord($validated['student_id'], $enrollmentId, $validated['reason']);
-
-            Log::info("Student {$validated['student_id']} removed from enrollment {$enrollmentId}. Reason: {$validated['reason']}");
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Student removed from enrollment successfully'
-            ]);
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation error',
-                'errors' => $e->errors()
-            ], 422);
-        } catch (\Exception $e) {
-            Log::error('Unassign student error: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to remove student: ' . $e->getMessage()
-            ], 500);
+        if (!$enrollment->students()->where('student_id', $validated['student_id'])->exists()) {
+            return response()->json(['success' => false, 'message' => 'Student not assigned'], 422);
         }
+
+        $enrollment->students()->detach($validated['student_id']);
+        $this->createRejectedEnrollmentRecord($validated['student_id'], $enrollmentId, $validated['reason']);
+
+        return response()->json(['success' => true, 'message' => 'Student removed successfully']);
     }
 
     // ==================== PRIVATE METHODS ====================
-
-   private function getDropoutHistory($enrollmentId)
-{
-    try {
-        return EnrollmentDropout::with([
-                'student:id,full_name,email,contact_phone'
-            ])
+    private function getDropoutHistory($enrollmentId)
+    {
+        return EnrollmentDropout::with(['student:id,full_name,email,contact_phone'])
             ->where('enrollment_id', $enrollmentId)
             ->orderBy('created_at', 'desc')
             ->get();
-
-    } catch (\Exception $e) {
-        Log::error('Error fetching dropout history: ' . $e->getMessage());
-        return collect([]);
     }
-}
 
     private function removeFromRejectedEnrollments($studentId, $enrollmentId)
-{
-    try {
+    {
         EnrollmentDropout::where('student_id', $studentId)
             ->where('enrollment_id', $enrollmentId)
             ->delete();
-
-    } catch (\Exception $e) {
-        Log::error('Error removing dropout record: ' . $e->getMessage());
     }
-}
 
-private function createRejectedEnrollmentRecord($studentId, $enrollmentId, $reason)
-{
-    try {
+    private function createRejectedEnrollmentRecord($studentId, $enrollmentId, $reason)
+    {
         EnrollmentDropout::create([
-            'student_id'    => $studentId,
+            'student_id' => $studentId,
             'enrollment_id' => $enrollmentId,
-            'reason'        => $reason,
+            'reason' => $reason,
         ]);
-
-    } catch (\Exception $e) {
-        Log::error('Error creating dropout record: ' . $e->getMessage());
     }
-}
-public function listSimple()
-{
-    return Enrollmentss::select('id', 'title')->orderBy('title')->get();
-}
 
-
+    // ==================== LIST SIMPLE ====================
+    public function listSimple()
+    {
+        $this->authorizeAction('view Enrollments'); // Added authorization
+        
+        return Enrollmentss::select('id', 'title')->orderBy('title')->get();
+    }
 }

@@ -1,179 +1,289 @@
 <template>
   <AuthenticatedLayout>
-    <div class="min-h-screen bg-gray-50 py-8">
+    <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-6">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Header with Back Button -->
-        <div class="mb-6">
-          <button 
-            @click="$inertia.visit(route('enrollmentss.index'))"
-            class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-700 mb-4"
-          >
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-            </svg>
-            Back to Enrollments
-          </button>
+        <!-- Header Section -->
+        <div class="mb-8">
+          <!-- Back Navigation -->
+          <div class="mb-6">
+            <button 
+              @click="$inertia.visit(route('enrollmentss.index'))"
+              class="group inline-flex items-center text-sm font-medium text-gray-600 hover:text-blue-700 transition-colors"
+            >
+              <svg class="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+              </svg>
+              Back to Enrollments
+            </button>
+          </div>
           
-          <div class="flex justify-between items-start">
-            <div>
-              <h1 class="text-3xl font-bold text-gray-900">{{ enrollment.title }}</h1>
-              <p class="mt-2 text-gray-600">{{ enrollment.description }}</p>
+          <!-- Main Header -->
+          <div class="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-200">
+            <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+              <div class="flex-1">
+                <div class="flex items-start gap-4">
+                  <div class="p-3 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-xl">
+                    <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ enrollment.title }}</h1>
+                    <p class="text-gray-600 mb-4 max-w-3xl">{{ enrollment.description }}</p>
+                    <div class="flex flex-wrap gap-2">
+                      <span :class="getStatusBadgeClass(enrollment.completion_status)" 
+                            class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium">
+                        {{ enrollment.completion_status || 'Not specified' }}
+                      </span>
+                      <span v-if="enrollment.course?.course_name" 
+                            class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                        {{ enrollment.course.course_name }}
+                      </span>
+                      <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                        {{ formatDate(enrollment.enrollment_date) }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Action Buttons -->
+              <div class="flex flex-col sm:flex-row gap-3">
+                <button 
+                  @click="refreshData" 
+                  :disabled="loading"
+                  class="inline-flex items-center justify-center px-5 py-2.5 bg-white border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+                >
+                  <svg class="w-5 h-5 mr-2" :class="{ 'animate-spin': loading }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                  </svg>
+                  {{ loading ? 'Refreshing...' : 'Refresh' }}
+                </button>
+                
+                <Link 
+                  :href="route('enrollmentss.edit', enrollment.id)"
+                  class="inline-flex items-center justify-center px-5 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-600 border border-transparent rounded-lg font-medium text-white hover:from-blue-700 hover:to-cyan-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:-translate-y-0.5"
+                >
+                  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                  </svg>
+                  Edit Enrollment
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stats Overview -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-xl shadow p-5 border border-gray-200">
+              <div class="flex items-center">
+                <div class="p-3 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-lg mr-4">
+                  <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-sm font-medium text-gray-500">Capacity</p>
+                  <p class="text-2xl font-bold text-gray-900">
+                    {{ assignedStudents.length }} / {{ enrollment.student_capacity || '∞' }}
+                  </p>
+                </div>
+              </div>
             </div>
             
-            <div class="flex space-x-3">
-              <button 
-                @click="refreshData" 
-                class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                :disabled="loading"
-              >
-                <svg class="w-4 h-4 mr-2" :class="{ 'animate-spin': loading }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                </svg>
-                {{ loading ? 'Refreshing...' : 'Refresh' }}
-              </button>
-              
-              <Link 
-                :href="route('enrollmentss.edit', enrollment.id)"
-                class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                </svg>
-                Edit Enrollment
-              </Link>
+            <div class="bg-white rounded-xl shadow p-5 border border-gray-200">
+              <div class="flex items-center">
+                <div class="p-3 bg-gradient-to-r from-green-100 to-emerald-100 rounded-lg mr-4">
+                  <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-sm font-medium text-gray-500">Amount</p>
+                  <p class="text-2xl font-bold text-gray-900">{{ (enrollment.amount_to_be_paid) }}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow p-5 border border-gray-200">
+              <div class="flex items-center">
+                <div class="p-3 bg-gradient-to-r from-amber-100 to-yellow-100 rounded-lg mr-4">
+                  <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-sm font-medium text-gray-500">Location</p>
+                  <p class="text-lg font-semibold text-gray-900">{{ enrollment.company_address?.city || 'N/A' }}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow p-5 border border-gray-200">
+              <div class="flex items-center">
+                <div class="p-3 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-lg mr-4">
+                  <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.14.141-.259.259-.374.261l.213-3.053 5.56-5.022c.24-.213-.054-.334-.373-.121l-6.869 4.326-2.96-.924c-.64-.203-.658-.64.136-.954l11.566-4.458c.538-.196 1.006.128.832.941z"/>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-sm font-medium text-gray-500">Telegram</p>
+                  <a v-if="enrollment.telegram_link" 
+                     :href="enrollment.telegram_link" 
+                     target="_blank"
+                     class="text-lg font-semibold text-blue-600 hover:text-blue-800 hover:underline">
+                    Join Group
+                  </a>
+                  <p v-else class="text-lg font-semibold text-gray-500">Not linked</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Success/Error Messages -->
-        <div v-if="successMessage" class="mb-6 bg-green-50 border border-green-200 rounded-md p-4">
-          <div class="flex">
-            <svg class="w-5 h-5 text-green-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-            </svg>
-            <p class="text-green-800">{{ successMessage }}</p>
+        <!-- Flash Messages -->
+        <div class="space-y-3 mb-6">
+          <div v-if="successMessage" class="rounded-xl p-4 bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 shadow-sm">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm font-medium text-emerald-800">{{ successMessage }}</p>
+              </div>
+            </div>
           </div>
-        </div>
-        
-        <div v-if="errorMessage" class="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
-          <div class="flex">
-            <svg class="w-5 h-5 text-red-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
-            </svg>
-            <p class="text-red-800">{{ errorMessage }}</p>
+          
+          <div v-if="errorMessage" class="rounded-xl p-4 bg-gradient-to-r from-red-50 to-rose-50 border border-red-200 shadow-sm">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm font-medium text-red-800">{{ errorMessage }}</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- Modal Trigger Buttons -->
-        <div class="mb-6 flex space-x-4">
+        <!-- Primary Action Buttons -->
+        <div class="mb-6 flex flex-wrap gap-4">
           <button 
             @click="showModal = true"
-            class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+            class="group inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl shadow-lg text-white bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow-xl"
           >
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 mr-3 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
             </svg>
-            Manage Enrollment Details
+            Manage Students
           </button>
 
-          <!-- Dropout History Button -->
           <button 
             @click="showDropoutHistory = true"
-            class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            class="group inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl shadow-lg text-white bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow-xl"
           >
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 mr-3 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
             </svg>
-            View Dropout History
+            Dropout History
           </button>
         </div>
 
-        <!-- Main Modal Overlay -->
-        <div v-if="showModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div class="relative top-20 mx-auto p-5 border w-full max-w-7xl shadow-lg rounded-md bg-white max-h-[90vh] overflow-y-auto">
+        <!-- Main Management Modal -->
+        <div v-if="showModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div class="bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[90vh] overflow-hidden">
             
             <!-- Modal Header -->
-            <div class="flex justify-between items-center pb-3 border-b">
-              <h3 class="text-2xl font-bold text-gray-900">Enrollment Management - {{ enrollment.title }}</h3>
-              <button 
-                @click="showModal = false"
-                class="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              </button>
+            <div class="px-8 py-6 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+              <div class="flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                  <div class="p-3 bg-white rounded-xl shadow-sm">
+                    <svg class="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 class="text-2xl font-bold text-gray-900">Student Management</h3>
+                    <p class="text-gray-600">{{ enrollment.title }}</p>
+                  </div>
+                </div>
+                <button 
+                  @click="showModal = false"
+                  class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-lg transition-colors"
+                >
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+              </div>
             </div>
 
             <!-- Modal Content -->
-            <div class="mt-4">
+            <div class="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
               <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Left Column - Enrollment Details -->
-                <div class="lg:col-span-1 space-y-6">
-                  <!-- Enrollment Information Card -->
-                  <div class="bg-white shadow rounded-lg">
-                    <div class="px-6 py-4 border-b border-gray-200">
-                      <h3 class="text-lg font-medium text-gray-900">Enrollment Information</h3>
-                    </div>
-                    <div class="p-6 space-y-4">
-                      <div class="flex justify-between">
-                        <span class="text-sm font-medium text-gray-500">Status</span>
-                        <span :class="getStatusBadgeClass(enrollment.completion_status)" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium">
+                <!-- Left Column - Enrollment Info -->
+                <div class="space-y-6">
+                  <!-- Info Card -->
+                  <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+                    <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                      <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                      </svg>
+                      Enrollment Details
+                    </h4>
+                    <div class="space-y-3">
+                      <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">Status</span>
+                        <span :class="getStatusBadgeClass(enrollment.completion_status)" 
+                              class="px-3 py-1 rounded-full text-xs font-medium">
                           {{ enrollment.completion_status || 'Not specified' }}
                         </span>
                       </div>
                       
-                      <div class="flex justify-between">
-                        <span class="text-sm font-medium text-gray-500">Student Capacity</span>
-                        <span class="text-sm text-gray-900">
-                          {{ assignedStudents.length }} / {{ enrollment.student_capacity || 'Unlimited' }}
-                        </span>
+                      <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">Capacity</span>
+                        <div class="flex items-center gap-2">
+                          <span class="text-sm font-semibold text-gray-900">
+                            {{ assignedStudents.length }}/{{ enrollment.student_capacity || '∞' }}
+                          </span>
+                          <div class="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div :style="{ width: `${Math.min((assignedStudents.length / (enrollment.student_capacity || 1)) * 100, 100)}%` }" 
+                                 class="h-full bg-gradient-to-r from-blue-500 to-cyan-500"></div>
+                          </div>
+                        </div>
                       </div>
                       
-                      <div class="flex justify-between">
-                        <span class="text-sm font-medium text-gray-500">Enrollment Date</span>
-                        <span class="text-sm text-gray-900">{{ formatDate(enrollment.enrollment_date) }}</span>
+                      <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">Amount</span>
+                        <span class="text-sm font-semibold text-gray-900">{{(enrollment.amount_to_be_paid) }}</span>
                       </div>
                       
-                      <div class="flex justify-between">
-                        <span class="text-sm font-medium text-gray-500">Amount to be Paid</span>
-                        <span class="text-sm text-gray-900">{{(enrollment.amount_to_be_paid) }}</span>
+                      <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">Course</span>
+                        <span class="text-sm font-semibold text-gray-900">{{ enrollment.course?.course_name || 'N/A' }}</span>
                       </div>
                     </div>
                   </div>
 
-                  <!-- Course Information Card -->
-                  <div class="bg-white shadow rounded-lg">
-                    <div class="px-6 py-4 border-b border-gray-200">
-                      <h3 class="text-lg font-medium text-gray-900">Course Information</h3>
-                    </div>
-                    <div class="p-6 space-y-4">
-                      <div v-if="enrollment.course">
-                        <span class="text-sm font-medium text-gray-500 block mb-1">Course</span>
-                        <span class="text-sm text-gray-900">{{ enrollment.course.course_name }}</span>
-                      </div>
-                      
-                      <div v-if="enrollment.course_type">
-                        <span class="text-sm font-medium text-gray-500 block mb-1">Course Type</span>
-                        <span class="text-sm text-gray-900">{{ enrollment.course_type.course_type }}</span>
-                      </div>
-                      
-                      <div v-if="enrollment.company_address">
-                        <span class="text-sm font-medium text-gray-500 block mb-1">Company</span>
-                        <span class="text-sm text-gray-900">{{ enrollment.company_address.city }}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Quick Actions Card -->
-                  <div class="bg-white shadow rounded-lg">
-                    <div class="px-6 py-4 border-b border-gray-200">
-                      <h3 class="text-lg font-medium text-gray-900">Quick Actions</h3>
-                    </div>
-                    <div class="p-6 space-y-3">
+                  <!-- Quick Actions -->
+                  <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+                    <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                      <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                      </svg>
+                      Quick Actions
+                    </h4>
+                    <div class="space-y-3">
                       <button 
                         @click="refreshData"
-                        class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        class="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
                       >
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
@@ -185,17 +295,17 @@
                         v-if="enrollment.telegram_link" 
                         :href="enrollment.telegram_link" 
                         target="_blank"
-                        class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        class="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
                       >
                         <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
                           <path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.14.141-.259.259-.374.261l.213-3.053 5.56-5.022c.24-.213-.054-.334-.373-.121l-6.869 4.326-2.96-.924c-.64-.203-.658-.64.136-.954l11.566-4.458c.538-.196 1.006.128.832.941z"/>
                         </svg>
-                        Join Telegram
+                        Join Telegram Group
                       </a>
 
                       <button 
                         @click="showDropoutHistory = true; showModal = false;"
-                        class="w-full flex items-center justify-center px-4 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                        class="w-full flex items-center justify-center px-4 py-3 border border-red-300 rounded-lg text-sm font-medium text-red-700 bg-white hover:bg-red-50 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200"
                       >
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
@@ -206,162 +316,336 @@
                   </div>
                 </div>
 
-                <!-- Right Column - Students Management -->
+                <!-- Right Column - Students -->
                 <div class="lg:col-span-2 space-y-6">
-                  <!-- Assigned Students Card -->
-                  <div class="bg-white shadow rounded-lg">
-                    <div class="px-6 py-4 border-b border-gray-200">
+                  <!-- Assigned Students -->
+                  <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
                       <div class="flex justify-between items-center">
-                        <h3 class="text-lg font-medium text-gray-900">Assigned Students</h3>
-                        <span class="text-sm text-gray-500">{{ assignedStudents.length }} students</span>
+                        <h4 class="text-lg font-semibold text-gray-900 flex items-center">
+                          <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
+                          </svg>
+                          Assigned Students
+                        </h4>
+                        <span class="text-sm font-medium text-gray-700 bg-white px-3 py-1 rounded-full">
+                          {{ assignedStudents.length }} students
+                        </span>
                       </div>
                     </div>
                     
                     <div class="p-6">
+                      <!-- Loading State -->
                       <div v-if="loading" class="text-center py-8">
-                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                        <p class="mt-2 text-sm text-gray-600">Loading students...</p>
+                        <div class="inline-flex items-center justify-center">
+                          <div class="w-10 h-10 border-3 border-gray-200 border-t-blue-600 rounded-full animate-spin"></div>
+                        </div>
+                        <p class="mt-4 text-sm text-gray-600">Loading students...</p>
                       </div>
                       
+                      <!-- Empty State -->
                       <div v-else-if="assignedStudents.length === 0" class="text-center py-8">
-                        <svg class="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-                        </svg>
-                        <h4 class="mt-2 text-sm font-medium text-gray-900">No students assigned</h4>
-                        <p class="mt-1 text-sm text-gray-500">Get started by assigning students to this enrollment.</p>
+                        <div class="w-16 h-16 mx-auto bg-gradient-to-r from-blue-100 to-cyan-100 rounded-full flex items-center justify-center mb-4">
+                          <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
+                          </svg>
+                        </div>
+                        <h4 class="text-base font-semibold text-gray-900 mb-2">No students assigned</h4>
+                        <p class="text-sm text-gray-600 mb-4">Assign students to get started</p>
                       </div>
                       
-                      <ul v-else class="divide-y divide-gray-200">
-                        <li v-for="student in assignedStudents" :key="student.id" class="py-4">
+                      <!-- Students List -->
+                      <div v-else class="space-y-3">
+                        <div v-for="student in assignedStudents" :key="student.id" 
+                             class="group bg-gray-50 hover:bg-white border border-gray-200 rounded-lg p-4 transition-all duration-200 hover:shadow-md">
                           <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-4">
-                              <div class="flex-shrink-0">
-                                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                  <span class="text-blue-600 font-semibold text-sm">
+                              <div class="relative">
+                                <div class="w-12 h-12 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-full flex items-center justify-center">
+                                  <span class="text-blue-700 font-bold text-sm">
                                     {{ getInitials(student.full_name) }}
                                   </span>
                                 </div>
+                                <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-400 border-2 border-white rounded-full"></div>
                               </div>
                               <div>
-                                <p class="text-sm font-medium text-gray-900">{{ student.full_name }}</p>
-                                <p class="text-sm text-gray-500">{{ student.email }}</p>
-                                <p v-if="student.contact_phone" class="text-xs text-gray-400">{{ student.contact_phone }}</p>
+                                <p class="font-semibold text-gray-900">{{ student.full_name }}</p>
+                                <p class="text-sm text-gray-600">{{ student.email }}</p>
+                                <div v-if="student.contact_phone" class="flex items-center mt-1">
+                                  <svg class="w-4 h-4 text-gray-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                                  </svg>
+                                  <span class="text-xs text-gray-500">{{ student.contact_phone }}</span>
+                                </div>
                               </div>
                             </div>
-                            <div class="flex space-x-2">
-                              <!-- Unassign Button (Works like Dropout but with default reason) -->
+                            <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                               <button 
                                 @click="unassignStudent(student.id)" 
-                                class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                class="flex items-center px-3 py-2 text-sm font-medium text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors"
                                 :disabled="processingStudent === student.id"
+                                title="Unassign Student"
                               >
-                                <span v-if="processingStudent === student.id" class="flex items-center">
-                                  <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-red-700" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                  </svg>
-                                  Unassigning...
-                                </span>
-                                <span v-else class="flex items-center">
-                                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                  </svg>
-                                  Unassign
-                                </span>
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                                <span v-if="processingStudent === student.id">...</span>
+                                <span v-else>Unassign</span>
                               </button>
-
-                              <!-- Dropout Button (Custom reason) -->
                               <button 
                                 @click="dropoutStudent(student.id)" 
-                                class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                class="flex items-center px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 border border-red-600 rounded-lg transition-colors"
                                 :disabled="processingStudent === student.id"
+                                title="Mark as Dropout"
                               >
-                                <span v-if="processingStudent === student.id" class="flex items-center">
-                                  <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                  </svg>
-                                  Dropping...
-                                </span>
-                                <span v-else class="flex items-center">
-                                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                                  </svg>
-                                  Dropout
-                                </span>
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                                </svg>
+                                <span v-if="processingStudent === student.id">...</span>
+                                <span v-else>Dropout</span>
                               </button>
                             </div>
                           </div>
-                        </li>
-                      </ul>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  <!-- Assign Students Card -->
-                  <div class="bg-white shadow rounded-lg">
-                    <div class="px-6 py-4 border-b border-gray-200">
-                      <h3 class="text-lg font-medium text-gray-900">Assign Students</h3>
+                  <!-- Assign Students -->
+                  <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                      <h4 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        Assign New Student
+                      </h4>
                     </div>
                     
                     <div class="p-6">
-                      <div v-if="isCapacityReached" class="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
-                        <div class="flex">
-                          <svg class="w-5 h-5 text-yellow-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                      <!-- Capacity Warning -->
+                      <div v-if="isCapacityReached" class="mb-6 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-lg p-4">
+                        <div class="flex items-start">
+                          <svg class="w-5 h-5 text-amber-600 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
                           </svg>
                           <div>
-                            <h4 class="text-sm font-medium text-yellow-800">Enrollment Full</h4>
-                            <p class="text-sm text-yellow-700 mt-1">This enrollment has reached its capacity of {{ enrollment.student_capacity }} students.</p>
+                            <h4 class="text-sm font-medium text-amber-800">Enrollment Capacity Reached</h4>
+                            <p class="text-sm text-amber-700 mt-1">
+                              This enrollment has reached its maximum capacity of {{ enrollment.student_capacity }} students.
+                              You cannot assign more students unless capacity is increased or existing students are removed.
+                            </p>
                           </div>
                         </div>
                       </div>
 
                       <div v-else>
-                        <div class="mb-4">
-                          <label for="student-select" class="block text-sm font-medium text-gray-700 mb-2">
-                            Select Student to Assign
-                          </label>
-                          <select 
-                            id="student-select"
-                            v-model="selectedStudent" 
-                            class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-                            :disabled="loadingAvailable"
-                          >
-                            <option value="">Choose a student...</option>
-                            <option v-for="student in availableStudents" :key="student.id" :value="student.id">
-                              {{ student.full_name }} ({{ student.email }})
-                            </option>
-                          </select>
+                        <div class="space-y-4">
+                          <!-- Student Selection -->
+                          <div>
+                            <label for="student-select" class="block text-sm font-medium text-gray-700 mb-2">
+                              Select Available Student
+                            </label>
+                            <div class="relative">
+                              <select 
+                                id="student-select"
+                                v-model="selectedStudent" 
+                                class="block w-full px-4 py-3 text-base border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                                :disabled="loadingAvailable"
+                              >
+                                <option value="">Select a student...</option>
+                                <option v-for="student in availableStudents" :key="student.id" :value="student.id">
+                                  {{ student.full_name }} • {{ student.email }}
+                                </option>
+                              </select>
+                              <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                              </div>
+                            </div>
+                            
+                            <!-- Loading/Available Info -->
+                            <div class="mt-2">
+                              <div v-if="loadingAvailable" class="flex items-center text-sm text-gray-500">
+                                <svg class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
+                                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Loading available students...
+                              </div>
+                              <div v-else-if="availableStudents.length === 0" class="text-sm text-gray-500">
+                                No available students found
+                              </div>
+                              <div v-else class="text-sm text-gray-500">
+                                {{ availableStudents.length }} students available for assignment
+                              </div>
+                            </div>
+                          </div>
                           
-                          <div v-if="loadingAvailable" class="mt-2 text-sm text-gray-500">
-                            Loading available students...
-                          </div>
-                          <div v-else-if="availableStudents.length === 0" class="mt-2 text-sm text-gray-500">
-                            No available students found.
-                          </div>
-                          <div v-else class="mt-2 text-sm text-gray-500">
-                            {{ availableStudents.length }} students available for assignment
-                          </div>
-                        </div>
-                        
-                        <button
-                          @click="assignStudent"
-                          :disabled="!selectedStudent || assigningStudent"
-                          class="w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                        >
-                          <span v-if="assigningStudent" class="flex items-center">
-                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                          <!-- Assign Button -->
+                          <button
+                            @click="assignStudent"
+                            :disabled="!selectedStudent || assigningStudent"
+                            class="w-full flex justify-center items-center px-6 py-3.5 border border-transparent rounded-lg shadow-sm text-base font-semibold text-white bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow-lg"
+                          >
+                            <svg v-if="assigningStudent" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
                               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
-                            Assigning Student...
-                          </span>
-                          <span v-else class="flex items-center">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            <svg v-else class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                             </svg>
-                            Assign Student
-                          </span>
+                            {{ assigningStudent ? 'Assigning Student...' : 'Assign Student' }}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-8 py-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
+              <div class="text-sm text-gray-600">
+                Enrollment ID: <span class="font-semibold">{{ enrollment.id }}</span>
+              </div>
+              <div class="flex gap-3">
+                <button 
+                  @click="showModal = false"
+                  class="px-5 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
+                >
+                  Close
+                </button>
+                <button 
+                  @click="refreshData"
+                  class="px-5 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                >
+                  Refresh Data
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dropout History Modal -->
+        <div v-if="showDropoutHistory" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden">
+            
+            <!-- Modal Header -->
+            <div class="px-8 py-6 bg-gradient-to-r from-red-50 to-rose-50 border-b border-red-200">
+              <div class="flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                  <div class="p-3 bg-white rounded-xl shadow-sm border border-red-200">
+                    <svg class="w-7 h-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 class="text-2xl font-bold text-gray-900">Dropout History</h3>
+                    <p class="text-gray-600">{{ enrollment.title }}</p>
+                  </div>
+                </div>
+                <button 
+                  @click="showDropoutHistory = false"
+                  class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-lg transition-colors"
+                >
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Dropout History Content -->
+            <div class="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+              <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                <!-- Header -->
+                <div class="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                  <div class="flex justify-between items-center">
+                    <h4 class="text-lg font-semibold text-gray-900 flex items-center">
+                      <svg class="w-5 h-5 mr-2 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                      </svg>
+                      Student Dropout Records
+                    </h4>
+                    <span class="text-sm font-medium text-gray-700 bg-white px-3 py-1 rounded-full">
+                      {{ dropoutHistory.length }} records
+                    </span>
+                  </div>
+                </div>
+                
+                <!-- Content -->
+                <div class="p-6">
+                  <!-- Loading State -->
+                  <div v-if="loading" class="text-center py-8">
+                    <div class="inline-flex items-center justify-center">
+                      <div class="w-10 h-10 border-3 border-gray-200 border-t-red-600 rounded-full animate-spin"></div>
+                    </div>
+                    <p class="mt-4 text-sm text-gray-600">Loading dropout history...</p>
+                  </div>
+                  
+                  <!-- Empty State -->
+                  <div v-else-if="dropoutHistory.length === 0" class="text-center py-8">
+                    <div class="w-16 h-16 mx-auto bg-gradient-to-r from-red-100 to-rose-100 rounded-full flex items-center justify-center mb-4">
+                      <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                      </svg>
+                    </div>
+                    <h4 class="text-base font-semibold text-gray-900 mb-2">No dropout history</h4>
+                    <p class="text-sm text-gray-600 mb-4">No students have been dropped out from this enrollment yet.</p>
+                  </div>
+                  
+                  <!-- Dropout List -->
+                  <div v-else class="space-y-3">
+                    <div v-for="record in dropoutHistory" :key="record.id" 
+                         class="group bg-red-50/50 hover:bg-white border border-red-200 rounded-lg p-4 transition-all duration-200 hover:shadow-md">
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                          <div class="relative">
+                            <div class="w-12 h-12 bg-gradient-to-r from-red-100 to-rose-100 rounded-full flex items-center justify-center">
+                              <span class="text-red-700 font-bold text-sm">
+                                {{ getInitials(record.student?.full_name) }}
+                              </span>
+                            </div>
+                            <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-red-500 border-2 border-white rounded-full flex items-center justify-center">
+                              <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                              </svg>
+                            </div>
+                          </div>
+                          <div>
+                            <p class="font-semibold text-gray-900">{{ record.student?.full_name || 'Unknown Student' }}</p>
+                            <p v-if="record.student?.email" class="text-sm text-gray-600">{{ record.student.email }}</p>
+                            <div class="mt-2">
+                              <p class="text-sm text-gray-700">
+                                <span class="font-medium">Reason:</span> {{ record.reason }}
+                              </p>
+                              <p class="text-xs text-gray-500 mt-1 flex items-center">
+                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                Dropped out on {{ formatDate(record.created_at) }}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <button 
+                          @click="reassignStudent(record.student_id)" 
+                          class="flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 rounded-lg transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow-md"
+                          :disabled="processingStudent === record.student_id"
+                          v-if="record.student && !isCapacityReached"
+                          title="Reassign Student"
+                        >
+                          <svg v-if="processingStudent === record.student_id" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          <svg v-else class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                          </svg>
+                          {{ processingStudent === record.student_id ? 'Reassigning...' : 'Reassign' }}
                         </button>
                       </div>
                     </div>
@@ -371,131 +655,24 @@
             </div>
 
             <!-- Modal Footer -->
-            <div class="flex justify-end pt-6 border-t mt-6">
-              <button 
-                @click="showModal = false"
-                class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors mr-3"
-              >
-                Close
-              </button>
-              <button 
-                @click="refreshData"
-                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-              >
-                Refresh Data
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Dropout History Modal -->
-        <div v-if="showDropoutHistory" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div class="relative top-20 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white max-h-[90vh] overflow-y-auto">
-            
-            <!-- Modal Header -->
-            <div class="flex justify-between items-center pb-3 border-b">
-              <h3 class="text-2xl font-bold text-gray-900">Dropout History - {{ enrollment.title }}</h3>
-              <button 
-                @click="showDropoutHistory = false"
-                class="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              </button>
-            </div>
-
-            <!-- Dropout History Content -->
-            <div class="mt-4">
-              <div class="bg-white shadow rounded-lg">
-                <div class="px-6 py-4 border-b border-gray-200">
-                  <div class="flex justify-between items-center">
-                    <h3 class="text-lg font-medium text-gray-900">Student Dropout Records</h3>
-                    <span class="text-sm text-gray-500">{{ dropoutHistory.length }} records</span>
-                  </div>
-                </div>
-                
-                <div class="p-6">
-                  <div v-if="loading" class="text-center py-8">
-                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                    <p class="mt-2 text-sm text-gray-600">Loading dropout history...</p>
-                  </div>
-                  
-                  <div v-else-if="dropoutHistory.length === 0" class="text-center py-8">
-                    <svg class="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                    </svg>
-                    <h4 class="mt-2 text-sm font-medium text-gray-900">No dropout history</h4>
-                    <p class="mt-1 text-sm text-gray-500">No students have been dropped out from this enrollment yet.</p>
-                  </div>
-                  
-                  <ul v-else class="divide-y divide-gray-200">
-                    <li v-for="record in dropoutHistory" :key="record.id" class="py-4">
-                      <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-4">
-                          <div class="flex-shrink-0">
-                            <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                              <span class="text-red-600 font-semibold text-sm">
-                                {{ getInitials(record.student?.full_name) }}
-                              </span>
-                            </div>
-                          </div>
-                          <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium text-gray-900 truncate">
-                              {{ record.student?.full_name || 'Unknown Student' }}
-                            </p>
-                            <p v-if="record.student?.email" class="text-sm text-gray-500 truncate">
-                              {{ record.student.email }}
-                            </p>
-                            <p class="text-sm text-gray-600 mt-1">
-                              <span class="font-medium">Reason:</span> {{ record.reason }}
-                            </p>
-                            <p class="text-xs text-gray-400 mt-1">
-                              Dropped out on {{ formatDate(record.created_at) }}
-                            </p>
-                          </div>
-                        </div>
-                        <button 
-                          @click="reassignStudent(record.student_id)" 
-                          class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                          :disabled="processingStudent === record.student_id"
-                          v-if="record.student && !isCapacityReached"
-                        >
-                          <span v-if="processingStudent === record.student_id" class="flex items-center">
-                            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-green-700" fill="none" viewBox="0 0 24 24">
-                              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Reassigning...
-                          </span>
-                          <span v-else class="flex items-center">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                            </svg>
-                            Reassign
-                          </span>
-                        </button>
-                      </div>
-                    </li>
-                  </ul>
-                </div>
+            <div class="px-8 py-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
+              <div class="text-sm text-gray-600">
+                Total Dropouts: <span class="font-semibold text-red-600">{{ dropoutHistory.length }}</span>
               </div>
-            </div>
-
-            <!-- Dropout History Modal Footer -->
-            <div class="flex justify-end pt-6 border-t mt-6">
-              <button 
-                @click="showDropoutHistory = false"
-                class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors mr-3"
-              >
-                Close
-              </button>
-              <button 
-                @click="showModal = true; showDropoutHistory = false;"
-                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-              >
-                Back to Management
-              </button>
+              <div class="flex gap-3">
+                <button 
+                  @click="showDropoutHistory = false"
+                  class="px-5 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
+                >
+                  Close
+                </button>
+                <button 
+                  @click="showModal = true; showDropoutHistory = false;"
+                  class="px-5 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                >
+                  Back to Management
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -575,22 +752,24 @@ const formatDate = (dateString) => {
 }
 
 const formatCurrency = (amount) => {
-  if (!amount) return 'Not set'
+  if (!amount) return '$0.00'
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'USD'
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
   }).format(amount)
 }
 
 const getStatusBadgeClass = (status) => {
   const statusClasses = {
-    'completed': 'bg-green-100 text-green-800',
-    'in progress': 'bg-blue-100 text-blue-800',
-    'pending': 'bg-yellow-100 text-yellow-800',
-    'cancelled': 'bg-red-100 text-red-800',
-    'not started': 'bg-gray-100 text-gray-800'
+    'completed': 'bg-gradient-to-r from-green-100 to-emerald-100 text-emerald-800',
+    'in progress': 'bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800',
+    'pending': 'bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-800',
+    'cancelled': 'bg-gradient-to-r from-red-100 to-rose-100 text-red-800',
+    'not started': 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800'
   }
-  return statusClasses[status?.toLowerCase()] || 'bg-gray-100 text-gray-800'
+  return statusClasses[status?.toLowerCase()] || 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800'
 }
 
 const showSuccess = (message) => {
