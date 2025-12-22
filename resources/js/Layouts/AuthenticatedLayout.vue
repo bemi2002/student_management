@@ -9,13 +9,11 @@ const authUser = computed(() => page.props.auth?.user ?? {
   id: null 
 })
 
-// Get user roles from the authenticated user object
 const userRoles = computed(() => {
   const user = page.props.auth?.user
   return user?.roles ? user.roles.map(role => role.name) : []
 })
 
-// Get user permissions from the authenticated user object
 const userPermissions = computed(() => {
   const user = page.props.auth?.user
   if (user?.permissions) {
@@ -27,293 +25,159 @@ const userPermissions = computed(() => {
 const sidebarOpen = ref(true)
 const darkMode = ref(false)
 
-// Check if user has specific permission
 const hasPermission = (permissionName) => {
   return userPermissions.value.includes(permissionName)
 }
 
-// Check if user has specific role
 const hasRole = (roleName) => {
   return userRoles.value.includes(roleName)
 }
 
-// Dynamic links based on user's permissions/roles
 const navLinks = computed(() => {
   const baseLinks = [
     { name: 'Dashboard', route: 'dashboard', show: true }
   ]
 
-  // Only show Chats for users with chat permission or any role
   if (hasPermission('view chat') || userRoles.value.length > 0) {
     baseLinks.push({ name: 'Chats', route: 'chat.index', show: true })
   }
 
-  // Course-related permissions
-  if (hasPermission('view courses') || hasRole('Teacher') || hasRole('Admin')) {
-    baseLinks.push({ name: 'Courses', route: 'courses.index', show: true })
-  }
-
-  
-
-  if (hasPermission('view course_type') || hasRole('Admin') || hasRole('Teacher')) {
-    baseLinks.push({ name: 'Course Type', route: 'course-type.index', show: true })
-  }
-
-  // Admin-only features
   if (hasPermission('view enrollments') || hasRole('Admin')) {
     baseLinks.push({ name: 'Enrollments', route: 'enrollmentss.index', show: true })
-  }
-
-  if (hasPermission('view users') || hasRole('Admin')) {
-    baseLinks.push({ name: 'Users', route: 'users.index', show: true })
   }
 
   if (hasPermission('view students') || hasRole('Admin')) {
     baseLinks.push({ name: 'Students', route: 'students.index', show: true })
   }
 
-  if (hasPermission('view teachers') || hasRole('Admin')) {
-    baseLinks.push({ name: 'Teachers', route: 'teachers.index', show: true })
-  }
-
-  // System administration
   if (hasPermission('view settings') || hasRole('Admin')) {
     baseLinks.push({ name: 'Settings', route: 'settings.index', show: true })
-  }
-
-  if (hasPermission('view roles') || hasRole('Admin')) {
-    baseLinks.push({ name: 'Roles', route: 'roles.index', show: true })
-  }
-
-  if (hasPermission('view company_addresses') || hasRole('Admin')) {
-    baseLinks.push({ name: 'Company Addresses', route: 'company-addresses.index', show: true })
-  }
-
-  if (hasPermission('view locations') || hasRole('Admin')) {
-    baseLinks.push({ name: 'Locations', route: 'locations.index', show: true })
   }
 
   return baseLinks
 })
 
 const groupedLinks = computed(() => {
-  const groups = {
-    '': [],
-    '': [],
-    '': [],
-    '': [],
-    '': []
-  }
-
-  navLinks.value.forEach(link => {
-    if (['Dashboard', 'Chats', 'Teacher Chats'].includes(link.name)) {
-      groups[''].push(link)
-    } else if ([ 'Enrollments'].includes(link.name)) {
-      groups[''].push(link)
-    } else if ([ 'Students', ].includes(link.name)) {
-      groups[''].push(link)
-    
-    } else if (['Settings'].includes(link.name)) {
-      groups[''].push(link)
-    }
-  })
-
-  return Object.entries(groups).filter(([_, links]) => links.length > 0)
+  const groups = { '': [] }
+  navLinks.value.forEach(link => groups[''].push(link))
+  return Object.entries(groups)
 })
 
-const toggleDarkMode = () => {
-  darkMode.value = !darkMode.value
-  localStorage.setItem('darkMode', darkMode.value)
-  updateTheme()
-}
-
-const updateTheme = () => {
-  document.documentElement.classList.toggle('dark', darkMode.value)
-  document.body.classList.toggle('dark', darkMode.value)
-}
-
 onMounted(() => {
-  const saved = localStorage.getItem('darkMode')
-  darkMode.value = saved ? saved === 'true' : window.matchMedia('(prefers-color-scheme: dark)').matches
-  updateTheme()
+  if (window.innerWidth < 1024) {
+    sidebarOpen.value = false
+  }
 })
 </script>
 
 <template>
-  <div class="flex h-screen bg-gradient-to-br from-sky-50 to-blue-50 dark:bg-gray-900 transition-colors duration-300 font-semibold">
+  <div class="flex h-screen bg-gradient-to-br from-sky-50 to-blue-50 dark:bg-gray-900">
+
+    <!-- MOBILE OVERLAY -->
+    <div
+      v-if="sidebarOpen"
+      @click="sidebarOpen = false"
+      class="fixed inset-0 bg-black/50 z-30 lg:hidden"
+    ></div>
 
     <!-- SIDEBAR -->
     <aside
       :class="[
-        'flex flex-col shadow-2xl backdrop-blur-2xl border-r border-white/20 dark:border-gray-800 transition-all duration-300',
-        sidebarOpen ? 'w-72' : 'w-24'
+        'fixed lg:static inset-y-0 left-0 z-40 flex flex-col shadow-2xl backdrop-blur-2xl border-r border-white/20 dark:border-gray-800 transition-all duration-300',
+        sidebarOpen ? 'translate-x-0 w-72' : '-translate-x-full lg:translate-x-0 lg:w-24'
       ]"
       class="bg-gradient-to-b from-sky-600 to-blue-500 dark:from-gray-900/95 dark:to-gray-800/95"
     >
 
-      <!-- LOGO -->
-      <div class="flex items-center justify-between h-24 px-6 border-b border-white/10">
+      <!-- LOGO + TOGGLE -->
+      <div class="flex items-center justify-between h-20 px-6 border-b border-white/10">
         <div v-if="sidebarOpen" class="flex items-center space-x-4">
-          <div class="w-16 h-16 rounded-2xl bg-white shadow-xl overflow-hidden border-4 border-sky-300/50">
+          <div class="w-14 h-14 rounded-2xl bg-white shadow-xl overflow-hidden">
             <img
               src="https://tse3.mm.bing.net/th/id/OIP.pd__TJLp7WE9gvkK3ZF5xAHaFm"
               class="w-full h-full object-cover"
             />
           </div>
-
           <div>
-            <h1 class="text-white font-extrabold text-2xl tracking-wide drop-shadow-md">Student</h1>
-            <h1 class="text-white font-extrabold text-2xl tracking-wide drop-shadow-md">Management</h1>
-            <p class="text-sky-200 text-xs opacity-80 tracking-widest">SYSTEM</p>
+            <h1 class="text-white font-extrabold text-xl">Student</h1>
+            <h1 class="text-white font-extrabold text-xl">Management</h1>
           </div>
         </div>
 
-        <!-- Collapse -->
         <button
           @click="sidebarOpen = !sidebarOpen"
-          class="p-2 rounded-xl bg-white/10 hover:bg-white/20 dark:hover:bg-gray-700 text-white shadow-lg"
+          class="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white"
         >
-          {{ sidebarOpen ? '←' : '→' }}
+          ☰
         </button>
       </div>
 
-      <!-- NAVIGATION -->
+      <!-- NAV -->
       <nav class="flex-1 overflow-y-auto py-6">
-        <ul class="space-y-5 px-4">
-          <template v-for="[groupName, links] in groupedLinks" :key="groupName">
-            <li v-if="sidebarOpen && links.length" class="px-3">
-              <p class="text-sky-200 dark:text-gray-400 text-xs font-bold uppercase tracking-widest">
-                {{ groupName }}
-              </p>
-            </li>
-
-            <li v-for="link in links" :key="link.name">
-              <Link
-                :href="route(link.route)"
-                :class="[
-                  'flex items-center rounded-xl transition-all duration-200 group shadow-md hover:shadow-xl relative',
-                  sidebarOpen ? 'px-5 py-3' : 'px-4 py-3 justify-center',
-                  'bg-white/10 hover:bg-white/20 dark:bg-gray-700/40 dark:hover:bg-gray-700'
-                ]"
-                class="text-white backdrop-blur-md"
-              >
-                <span v-if="sidebarOpen" class="flex-1 font-semibold tracking-wide">
-                  {{ link.name }}
-                </span>
-
-                <!-- Tooltip -->
-                <div
-                  v-if="!sidebarOpen"
-                  class="absolute left-full ml-3 px-2 py-1 bg-sky-600 text-white text-xs rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50"
-                >
-                  {{ link.name }}
-                </div>
-              </Link>
-            </li>
-          </template>
+        <ul class="space-y-3 px-4">
+          <li v-for="link in navLinks" :key="link.name">
+            <Link
+              :href="route(link.route)"
+              class="flex items-center rounded-xl px-5 py-3 text-white bg-white/10 hover:bg-white/20 transition"
+            >
+              <span v-if="sidebarOpen">{{ link.name }}</span>
+            </Link>
+          </li>
         </ul>
       </nav>
 
-      <!-- PROFILE -->
-      <div class="border-t border-white/10 dark:border-gray-700 p-5 pt-6">
-        <div v-if="sidebarOpen" class="flex items-center space-x-4">
-          <div class="w-12 h-12 bg-white dark:bg-gray-700 rounded-2xl shadow-xl flex items-center justify-center">
-            <span class="text-sky-700 dark:text-gray-200 text-lg font-black">
-              {{ authUser.name.charAt(0).toUpperCase() }}
-            </span>
-          </div>
+      <!-- PROFILE + ACTIONS (ADDED) -->
+      <div class="border-t border-white/10 p-4 space-y-3">
 
-          <div class="flex-1">
-            <div class="text-white font-bold text-sm truncate">
-              {{ authUser.name }}
-            </div>
-            <div class="text-sky-200 dark:text-gray-300 text-xs truncate">
-              {{ authUser.email }}
-            </div>
-            <div class="flex flex-wrap gap-1 mt-2">
-              <!-- Show user ID -->
-              <span
-                class="px-2 py-0.5 bg-gray-600/70 text-white rounded-full text-[10px] font-semibold tracking-wide shadow-sm"
-                v-if="authUser.id"
-              >
-                ID: {{ authUser.id }}
-              </span>
-              
-              <!-- Show user roles -->
-              <span
-                v-for="role in userRoles"
-                :key="role"
-                class="px-2 py-0.5 bg-blue-600/70 text-white rounded-full text-[10px] font-semibold tracking-wide shadow-sm"
-              >
-                {{ role }}
-              </span>
-              
-              <!-- Show permissions count -->
-              <span
-                class="px-2 py-0.5 bg-green-600/70 text-white rounded-full text-[10px] font-semibold tracking-wide shadow-sm"
-                v-if="userPermissions.length > 0"
-              >
-                {{ userPermissions.length }} perm
-              </span>
-              
-              <!-- Show if guest user -->
-              <span
-                class="px-2 py-0.5 bg-yellow-600/70 text-white rounded-full text-[10px] font-semibold tracking-wide shadow-sm"
-                v-if="!authUser.id"
-              >
-                Guest
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div v-else class="flex justify-center">
-          <div class="w-10 h-10 bg-white dark:bg-gray-700 rounded-xl flex items-center justify-center shadow-lg">
-            <span class="text-sky-700 dark:text-gray-200 font-bold text-sm">
-              {{ authUser.name.charAt(0).toUpperCase() }}
-            </span>
-          </div>
+        <!-- USER INFO -->
+        <div v-if="sidebarOpen" class="text-white text-sm">
+          <div class="font-bold truncate">{{ authUser.name }}</div>
+          <div class="text-xs text-sky-200 truncate">{{ authUser.email }}</div>
         </div>
 
         <!-- ACTION BUTTONS -->
-        <div :class="sidebarOpen ? 'flex space-x-3 mt-6' : 'flex flex-col space-y-3 mt-6'">
+        <div :class="sidebarOpen ? 'flex gap-2' : 'flex flex-col gap-2'">
+
+          <!-- PROFILE -->
           <Link
-            :href="route('profile.edit')"
-            class="bg-white/20 dark:bg-gray-700/50 text-white rounded-xl px-4 py-2 font-semibold hover:bg-white/30 dark:hover:bg-gray-700 shadow-md text-center"
             v-if="authUser.id"
+            :href="route('profile.edit')"
+            class="bg-white/20 hover:bg-white/30 text-white rounded-xl px-4 py-2 text-sm font-semibold text-center"
           >
             <span v-if="sidebarOpen">Profile</span>
             <span v-else>P</span>
           </Link>
 
+          <!-- LOGOUT -->
           <Link
+            v-if="authUser.id"
             :href="route('logout')"
             method="post"
             as="button"
-            class="bg-gradient-to-r from-rose-500 to-red-500 hover:from-rose-600 hover:to-red-600 text-white rounded-xl px-4 py-2 font-semibold shadow-md text-center"
-            v-if="authUser.id"
+            class="bg-red-500 hover:bg-red-600 text-white rounded-xl px-4 py-2 text-sm font-semibold text-center"
           >
             <span v-if="sidebarOpen">Logout</span>
             <span v-else>L</span>
           </Link>
 
-          <!-- Show login button for guest users -->
+          <!-- LOGIN (GUEST) -->
           <Link
-            :href="route('login')"
-            class="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white rounded-xl px-4 py-2 font-semibold shadow-md text-center"
             v-if="!authUser.id"
+            :href="route('login')"
+            class="bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl px-4 py-2 text-sm font-semibold text-center"
           >
             <span v-if="sidebarOpen">Login</span>
             <span v-else>L</span>
           </Link>
+
         </div>
       </div>
 
     </aside>
 
     <!-- MAIN -->
-    <main class="flex-1 overflow-y-auto p-10">
-      <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-sky-100/40 dark:border-gray-700 p-10">
+    <main class="flex-1 overflow-y-auto p-4 lg:p-10">
+      <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-6 lg:p-10">
         <slot />
       </div>
     </main>
@@ -323,23 +187,9 @@ onMounted(() => {
 
 <style scoped>
 nav::-webkit-scrollbar { width: 4px; }
-nav::-webkit-scrollbar-track { background: #e0f2fe; }
-nav::-webkit-scrollbar-thumb {
-  background: #0ea5e9;
-  border-radius: 2px;
-}
-nav::-webkit-scrollbar-thumb:hover { background: #0284c7; }
+nav::-webkit-scrollbar-thumb { background: #0ea5e9; border-radius: 2px; }
 </style>
 
 <style>
-body {
-  background-color: #f0f9ff;
-  transition: 0.3s ease;
-}
-body.dark {
-  background-color: #0f172a;
-}
-* {
-  transition: background-color .3s, border-color .3s, color .3s, box-shadow .3s;
-}
+body.dark { background-color: #0f172a; }
 </style>

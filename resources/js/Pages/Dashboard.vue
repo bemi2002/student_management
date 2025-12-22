@@ -1,247 +1,12 @@
-<script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
-import ApplicationLogo from '@/Components/ApplicationLogo.vue'
-import { Head, Link } from '@inertiajs/vue3'
-import axios from 'axios'
-import { Chart as ChartJS, Title, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from 'chart.js'
-import { Bar } from 'vue-chartjs'
-import dayjs from 'dayjs'
-import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
-import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
-
-dayjs.extend(isSameOrAfter)
-dayjs.extend(isSameOrBefore)
-
-// Props
-const props = defineProps({
-  counts: { type: Object, default: () => ({ students: 0, teachers: 0, courses: 0, enrollments: 0 }) }
-})
-
-// Chart setup
-ChartJS.register(Title, Tooltip, Legend, CategoryScale, LinearScale, BarElement)
-const barData = {
-  labels: ['Students', 'Courses', 'Enrollments'],
-  datasets: [{
-    label: 'Counts',
-    data: [props.counts.students, props.counts.courses, props.counts.enrollments],
-    backgroundColor: ['#3B82F6', '#10B981', '#FBBF24']
-  }]
-}
-const barOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: { 
-    legend: { display: false }, 
-    title: { display: true, text: 'Dashboard Overview' } 
-  },
-  scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-}
-
-// Calendar & events
-const events = ref([])
-const enrollments = ref([])
-const loading = ref(false)
-const successMessage = ref('')
-
-// Forms
-const creatingNew = ref(false)
-const createForm = ref({ title: '', content: '', start: '', end: '', enrollmentss_id: null })
-const editingEventId = ref(null)
-const editForm = ref({ title: '', content: '', start: '', end: '', enrollmentss_id: null })
-
-// Dropdowns
-const dropdownOpen = ref(false)
-const editDropdownOpen = ref(false)
-const selectedEnrollmentText = ref('')
-const editSelectedEnrollmentText = ref('')
-
-// Enrollment colors
-const enrollmentColors = ref({})
-const colorPalette = [
-  '#3B82F6','#EF4444','#10B981','#F59E0B','#8B5CF6',
-  '#EC4899','#06B6D4','#84CC16','#F97316','#6366F1',
-  '#14B8A6','#EAB308','#A855F7','#F43F5E','#0EA5E9'
-]
-
-const generateColorMapping = () => {
-  const mapping = {}
-  enrollments.value.forEach((enrollment, index) => {
-    mapping[enrollment.id] = colorPalette[index % colorPalette.length]
-  })
-  enrollmentColors.value = mapping
-}
-
-// Load events and enrollments
-const loadData = async () => {
-  loading.value = true
-  try {
-    const startOfMonth = currentMonth.value.startOf('month').format('YYYY-MM-DD')
-    const endOfMonth = currentMonth.value.endOf('month').format('YYYY-MM-DD')
-    
-    const [eventsRes, enrollRes] = await Promise.all([
-      axios.get(`/calendar-events?start=${startOfMonth}&end=${endOfMonth}`),
-      axios.get('/enrollments/simple')
-    ])
-    events.value = eventsRes.data || []
-    enrollments.value = enrollRes.data || []
-    generateColorMapping()
-  } catch (err) {
-    console.error('Load error:', err)
-  } finally {
-    loading.value = false
-  }
-}
-onMounted(loadData)
-
-// Calendar navigation
-const currentMonth = ref(dayjs().startOf('month'))
-const nextMonth = () => currentMonth.value = currentMonth.value.add(1, 'month')
-const prevMonth = () => currentMonth.value = currentMonth.value.subtract(1, 'month')
-
-// Watch for month changes and reload events
-watch(currentMonth, () => {
-  loadData()
-})
-
-// Calendar grid
-const monthDays = computed(() => {
-  const start = currentMonth.value.startOf('month').startOf('week')
-  const end = currentMonth.value.endOf('month').endOf('week')
-  const days = []
-  let date = start
-  while (date.isBefore(end) || date.isSame(end, 'day')) {
-    days.push(date)
-    date = date.add(1, 'day')
-  }
-  return days
-})
-
-// Events per day
-const eventsForDay = (day) => events.value.filter(e => {
-  const start = dayjs(e.start)
-  const end = e.end ? dayjs(e.end) : start
-  return day.isSameOrAfter(start, 'day') && day.isSameOrBefore(end, 'day')
-})
-
-// Create/Edit events
-const startCreating = (day = null) => {
-  creatingNew.value = true
-  createForm.value = {
-    title: '', 
-    content: '', 
-    start: day ? day.format('YYYY-MM-DDTHH:mm') : dayjs().format('YYYY-MM-DDTHH:mm'), 
-    end: '', 
-    enrollmentss_id: null
-  }
-  selectedEnrollmentText.value = ''
-}
-
-const selectEnrollment = (en) => {
-  createForm.value.enrollmentss_id = en.id
-  selectedEnrollmentText.value = en.title
-  dropdownOpen.value = false
-}
-
-const createEvent = async () => {
-  if (!createForm.value.title.trim()) return alert('Title required!')
-  if (!createForm.value.enrollmentss_id) return alert('Select enrollment!')
-  try {
-    const payload = { 
-      title: createForm.value.title.trim(),
-      content: createForm.value.content.trim() || null,
-      start: dayjs(createForm.value.start).format('YYYY-MM-DD HH:mm:ss'),
-      end: createForm.value.end ? dayjs(createForm.value.end).format('YYYY-MM-DD HH:mm:ss') : null,
-      enrollmentss_id: createForm.value.enrollmentss_id
-    }
-    const res = await axios.post('/calendar-events', payload)
-    
-    // Clear the form
-    creatingNew.value = false
-    createForm.value = { title: '', content: '', start: '', end: '', enrollmentss_id: null }
-    selectedEnrollmentText.value = ''
-    
-    // Reload data from server to ensure consistency
-    await loadData()
-    
-    successMessage.value = 'Event created successfully!'
-    setTimeout(() => successMessage.value = '', 3000)
-  } catch (err) {
-    console.error(err)
-    alert(err.response?.data?.message || 'Failed to create event')
-  }
-}
-
-const startEditing = (event) => {
-  editingEventId.value = event.id
-  editForm.value = { 
-    ...event, 
-    start: dayjs(event.start).format('YYYY-MM-DDTHH:mm'), 
-    end: event.end ? dayjs(event.end).format('YYYY-MM-DDTHH:mm') : '' 
-  }
-  const selected = enrollments.value.find(e => e.id === editForm.value.enrollmentss_id)
-  editSelectedEnrollmentText.value = selected ? selected.title : ''
-}
-
-const selectEditEnrollment = (en) => {
-  editForm.value.enrollmentss_id = en.id
-  editSelectedEnrollmentText.value = en.title
-  editDropdownOpen.value = false
-}
-
-const saveEdit = async () => {
-  if (!editForm.value.title.trim()) return alert('Title required!')
-  if (!editForm.value.enrollmentss_id) return alert('Select enrollment!')
-  try {
-    await axios.put(`/calendar-events/${editingEventId.value}`, {
-      title: editForm.value.title.trim(),
-      content: editForm.value.content.trim() || null,
-      start: dayjs(editForm.value.start).format('YYYY-MM-DD HH:mm:ss'),
-      end: editForm.value.end ? dayjs(editForm.value.end).format('YYYY-MM-DD HH:mm:ss') : null,
-      enrollmentss_id: editForm.value.enrollmentss_id
-    })
-    
-    // Clear the editing state
-    editingEventId.value = null
-    editForm.value = { title: '', content: '', start: '', end: '', enrollmentss_id: null }
-    editSelectedEnrollmentText.value = ''
-    
-    // Reload data from server
-    await loadData()
-    
-    successMessage.value = 'Event updated successfully!'
-    setTimeout(() => successMessage.value = '', 3000)
-  } catch (err) {
-    console.error(err)
-    alert(err.response?.data?.message || 'Failed to update event')
-  }
-}
-
-const deleteEvent = async (id) => {
-  if (!confirm('Are you sure?')) return
-  try {
-    await axios.delete(`/calendar-events/${id}`)
-    // Reload data from server
-    await loadData()
-    successMessage.value = 'Event deleted successfully!'
-    setTimeout(() => successMessage.value = '', 3000)
-  } catch (err) {
-    console.error(err)
-    alert('Failed to delete event')
-  }
-}
-
-// Enrollment color
-const getEnrollmentColor = (id) => enrollmentColors.value[id] || '#3B82F6'
-</script>
-
 <template>
   <Head title="Dashboard"/>
   <AuthenticatedLayout>
     <template #header>
       <div class="flex justify-between items-center">
         <h2 class="text-2xl font-semibold text-gradient bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">Dashboard Overview</h2>
-        <ApplicationLogo class="h-10"/>
+        <div class="lg:hidden">
+          <ApplicationLogo class="h-8"/>
+        </div>
       </div>
     </template>
 
@@ -572,6 +337,243 @@ const getEnrollmentColor = (id) => enrollmentColors.value[id] || '#3B82F6'
     </div>
   </AuthenticatedLayout>
 </template>
+
+<script setup>
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import ApplicationLogo from '@/Components/ApplicationLogo.vue'
+import { Head, Link } from '@inertiajs/vue3'
+import axios from 'axios'
+import { Chart as ChartJS, Title, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from 'chart.js'
+import { Bar } from 'vue-chartjs'
+import dayjs from 'dayjs'
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
+
+dayjs.extend(isSameOrAfter)
+dayjs.extend(isSameOrBefore)
+
+// Props
+const props = defineProps({
+  counts: { type: Object, default: () => ({ students: 0, teachers: 0, courses: 0, enrollments: 0 }) }
+})
+
+// Chart setup
+ChartJS.register(Title, Tooltip, Legend, CategoryScale, LinearScale, BarElement)
+const barData = {
+  labels: ['Students', 'Courses', 'Enrollments'],
+  datasets: [{
+    label: 'Counts',
+    data: [props.counts.students, props.counts.courses, props.counts.enrollments],
+    backgroundColor: ['#3B82F6', '#10B981', '#FBBF24']
+  }]
+}
+const barOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { 
+    legend: { display: false }, 
+    title: { display: true, text: 'Dashboard Overview' } 
+  },
+  scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+}
+
+// Calendar & events
+const events = ref([])
+const enrollments = ref([])
+const loading = ref(false)
+const successMessage = ref('')
+
+// Forms
+const creatingNew = ref(false)
+const createForm = ref({ title: '', content: '', start: '', end: '', enrollmentss_id: null })
+const editingEventId = ref(null)
+const editForm = ref({ title: '', content: '', start: '', end: '', enrollmentss_id: null })
+
+// Dropdowns
+const dropdownOpen = ref(false)
+const editDropdownOpen = ref(false)
+const selectedEnrollmentText = ref('')
+const editSelectedEnrollmentText = ref('')
+
+// Enrollment colors
+const enrollmentColors = ref({})
+const colorPalette = [
+  '#3B82F6','#EF4444','#10B981','#F59E0B','#8B5CF6',
+  '#EC4899','#06B6D4','#84CC16','#F97316','#6366F1',
+  '#14B8A6','#EAB308','#A855F7','#F43F5E','#0EA5E9'
+]
+
+const generateColorMapping = () => {
+  const mapping = {}
+  enrollments.value.forEach((enrollment, index) => {
+    mapping[enrollment.id] = colorPalette[index % colorPalette.length]
+  })
+  enrollmentColors.value = mapping
+}
+
+// Load events and enrollments
+const loadData = async () => {
+  loading.value = true
+  try {
+    const startOfMonth = currentMonth.value.startOf('month').format('YYYY-MM-DD')
+    const endOfMonth = currentMonth.value.endOf('month').format('YYYY-MM-DD')
+    
+    const [eventsRes, enrollRes] = await Promise.all([
+      axios.get(`/calendar-events?start=${startOfMonth}&end=${endOfMonth}`),
+      axios.get('/enrollments/simple')
+    ])
+    events.value = eventsRes.data || []
+    enrollments.value = enrollRes.data || []
+    generateColorMapping()
+  } catch (err) {
+    console.error('Load error:', err)
+  } finally {
+    loading.value = false
+  }
+}
+onMounted(loadData)
+
+// Calendar navigation
+const currentMonth = ref(dayjs().startOf('month'))
+const nextMonth = () => currentMonth.value = currentMonth.value.add(1, 'month')
+const prevMonth = () => currentMonth.value = currentMonth.value.subtract(1, 'month')
+
+// Watch for month changes and reload events
+watch(currentMonth, () => {
+  loadData()
+})
+
+// Calendar grid
+const monthDays = computed(() => {
+  const start = currentMonth.value.startOf('month').startOf('week')
+  const end = currentMonth.value.endOf('month').endOf('week')
+  const days = []
+  let date = start
+  while (date.isBefore(end) || date.isSame(end, 'day')) {
+    days.push(date)
+    date = date.add(1, 'day')
+  }
+  return days
+})
+
+// Events per day
+const eventsForDay = (day) => events.value.filter(e => {
+  const start = dayjs(e.start)
+  const end = e.end ? dayjs(e.end) : start
+  return day.isSameOrAfter(start, 'day') && day.isSameOrBefore(end, 'day')
+})
+
+// Create/Edit events
+const startCreating = (day = null) => {
+  creatingNew.value = true
+  createForm.value = {
+    title: '', 
+    content: '', 
+    start: day ? day.format('YYYY-MM-DDTHH:mm') : dayjs().format('YYYY-MM-DDTHH:mm'), 
+    end: '', 
+    enrollmentss_id: null
+  }
+  selectedEnrollmentText.value = ''
+}
+
+const selectEnrollment = (en) => {
+  createForm.value.enrollmentss_id = en.id
+  selectedEnrollmentText.value = en.title
+  dropdownOpen.value = false
+}
+
+const createEvent = async () => {
+  if (!createForm.value.title.trim()) return alert('Title required!')
+  if (!createForm.value.enrollmentss_id) return alert('Select enrollment!')
+  try {
+    const payload = { 
+      title: createForm.value.title.trim(),
+      content: createForm.value.content.trim() || null,
+      start: dayjs(createForm.value.start).format('YYYY-MM-DD HH:mm:ss'),
+      end: createForm.value.end ? dayjs(createForm.value.end).format('YYYY-MM-DD HH:mm:ss') : null,
+      enrollmentss_id: createForm.value.enrollmentss_id
+    }
+    const res = await axios.post('/calendar-events', payload)
+    
+    // Clear the form
+    creatingNew.value = false
+    createForm.value = { title: '', content: '', start: '', end: '', enrollmentss_id: null }
+    selectedEnrollmentText.value = ''
+    
+    // Reload data from server to ensure consistency
+    await loadData()
+    
+    successMessage.value = 'Event created successfully!'
+    setTimeout(() => successMessage.value = '', 3000)
+  } catch (err) {
+    console.error(err)
+    alert(err.response?.data?.message || 'Failed to create event')
+  }
+}
+
+const startEditing = (event) => {
+  editingEventId.value = event.id
+  editForm.value = { 
+    ...event, 
+    start: dayjs(event.start).format('YYYY-MM-DDTHH:mm'), 
+    end: event.end ? dayjs(event.end).format('YYYY-MM-DDTHH:mm') : '' 
+  }
+  const selected = enrollments.value.find(e => e.id === editForm.value.enrollmentss_id)
+  editSelectedEnrollmentText.value = selected ? selected.title : ''
+}
+
+const selectEditEnrollment = (en) => {
+  editForm.value.enrollmentss_id = en.id
+  editSelectedEnrollmentText.value = en.title
+  editDropdownOpen.value = false
+}
+
+const saveEdit = async () => {
+  if (!editForm.value.title.trim()) return alert('Title required!')
+  if (!editForm.value.enrollmentss_id) return alert('Select enrollment!')
+  try {
+    await axios.put(`/calendar-events/${editingEventId.value}`, {
+      title: editForm.value.title.trim(),
+      content: editForm.value.content.trim() || null,
+      start: dayjs(editForm.value.start).format('YYYY-MM-DD HH:mm:ss'),
+      end: editForm.value.end ? dayjs(editForm.value.end).format('YYYY-MM-DD HH:mm:ss') : null,
+      enrollmentss_id: editForm.value.enrollmentss_id
+    })
+    
+    // Clear the editing state
+    editingEventId.value = null
+    editForm.value = { title: '', content: '', start: '', end: '', enrollmentss_id: null }
+    editSelectedEnrollmentText.value = ''
+    
+    // Reload data from server
+    await loadData()
+    
+    successMessage.value = 'Event updated successfully!'
+    setTimeout(() => successMessage.value = '', 3000)
+  } catch (err) {
+    console.error(err)
+    alert(err.response?.data?.message || 'Failed to update event')
+  }
+}
+
+const deleteEvent = async (id) => {
+  if (!confirm('Are you sure?')) return
+  try {
+    await axios.delete(`/calendar-events/${id}`)
+    // Reload data from server
+    await loadData()
+    successMessage.value = 'Event deleted successfully!'
+    setTimeout(() => successMessage.value = '', 3000)
+  } catch (err) {
+    console.error(err)
+    alert('Failed to delete event')
+  }
+}
+
+// Enrollment color
+const getEnrollmentColor = (id) => enrollmentColors.value[id] || '#3B82F6'
+</script>
 
 <style scoped>
 .text-gradient {

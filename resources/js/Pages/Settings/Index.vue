@@ -969,7 +969,7 @@ const toggleUserPassword = (user) => {
         <!-- Course Types Accordion -->
         <div class="border rounded-lg overflow-hidden">
           <button @click="open.courseType = !open.courseType" class="w-full bg-gray-100 px-10 py-14 font-semibold flex justify-between hover:bg-gray-200 transition-colors">
-            Course Types <span>{{ open.courseType ? "▲" : "▼" }}</span>
+            Enrollment Types <span>{{ open.courseType ? "▲" : "▼" }}</span>
           </button>
 
           <div v-if="open.courseType" class="p-6 bg-white border-t">
