@@ -177,6 +177,15 @@ onMounted(() => {
 
     <!-- MAIN -->
     <main class="flex-1 overflow-y-auto p-4 lg:p-10">
+      <!-- HAMBURGER ICON FOR MOBILE (ADDED THIS) -->
+      <button
+        v-if="!sidebarOpen"
+        @click="sidebarOpen = true"
+        class="lg:hidden fixed top-6 left-6 z-50 p-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white shadow-2xl transition-all"
+      >
+        ☰
+      </button>
+
       <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-6 lg:p-10">
         <slot />
       </div>
