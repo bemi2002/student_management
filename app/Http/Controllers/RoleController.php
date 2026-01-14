@@ -14,7 +14,7 @@ class RoleController extends Controller
 {
     private $permissions = [
         'Admin'       => ['view','create','edit','delete'],
-        'Super-Admin' => ['view','create','edit','delete'],
+      
     ];
 
     private function checkPermission(string $action): bool

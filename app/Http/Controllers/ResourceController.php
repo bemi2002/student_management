@@ -12,10 +12,7 @@ use Illuminate\Support\Facades\Auth;
 class ResourceController extends Controller
 {
     // Allowed actions per role
-    private $permissions = [
-        'Admin'   => ['view','create','edit','delete'],
-        'Teacher' => ['view','create','edit','delete'],
-    ];
+    
 
     private function checkPermission(string $action): bool
     {

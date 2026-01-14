@@ -16,7 +16,7 @@ class SpecificCourseController extends Controller
     
     private $permissions = [
         'Admin'   => ['view','create','edit','delete'],
-        'Teacher' => ['view','create','edit','delete'], // adjust if needed
+        'Teacher' => ['view','create','edit','delete'], 
     ];
 
     
